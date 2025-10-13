@@ -1,0 +1,2808 @@
+
+
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI绘本 - 奕兆科技</title>
+
+    
+
+    <!-- Tailwind CSS -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    
+
+    <script>
+
+        tailwind.config = {
+
+            theme: {
+
+                extend: {
+
+                    colors: {
+
+                        primary: {
+
+                            50: '#f0f3ff',
+
+                            100: '#e0e7ff',
+
+                            200: '#c7d2fe',
+
+                            300: '#a5b4fc',
+
+                            400: '#818cf8',
+
+                            500: '#6366f1',
+
+                            600: '#4f46e5',
+
+                            700: '#4338ca',
+
+                            800: '#3730a3',
+
+                            900: '#312e81',
+
+                        },
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    </script>
+
+    
+
+    <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        
+
+        body {
+
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+
+        }
+
+
+
+        /* 新页面高亮动画 */
+
+        @keyframes slideInAndPulse {
+
+            0% {
+
+                transform: translateY(-10px);
+
+                opacity: 0;
+
+            }
+
+            100% {
+
+                transform: translateY(0);
+
+                opacity: 1;
+
+            }
+
+        }
+
+
+
+        .page-highlight {
+
+            background-color: #dbeafe !important;
+
+            border-color: #60a5fa !important;
+
+            animation: slideInAndPulse 0.4s ease-out;
+
+            transition: background-color 0.5s ease, border-color 0.5s ease;
+
+        }
+
+
+
+        .page-highlight-remove {
+
+            background-color: white !important;
+
+            border-color: #e5e7eb !important;
+
+        }
+
+
+        /* AI加载动画 */
+        @keyframes spin-slow {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .animate-spin-slow {
+            animation: spin-slow 3s linear infinite;
+        }
+
+        /* 绘本翻页过渡动画 */
+        .storybook-fade-enter {
+            opacity: 0;
+            transform: scale(0.98);
+        }
+
+        .storybook-fade-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+        }
+
+        .storybook-fade-exit {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .storybook-fade-exit-active {
+            opacity: 0;
+            transform: scale(0.98);
+            transition: opacity 0.3s ease-in, transform 0.3s ease-in;
+        }
+
+        /* 图片加载指示器 */
+        .image-loading {
+            position: relative;
+        }
+
+        .image-loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            margin: -20px 0 0 -20px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+
+</head>
+
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+
+    <!-- 顶部导航栏 -->
+
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+
+        <div class="px-6 py-3 flex justify-between items-center">
+
+            <div class="flex items-center gap-3">
+
+                <div class="w-9 h-9 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
+
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+
+                </div>
+
+                <span class="text-base font-semibold text-gray-800">奕兆科技</span>
+
+            </div>
+
+            <div class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors">
+
+                <div class="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center">
+
+                    <i data-lucide="user" class="w-3.5 h-3.5 text-gray-600"></i>
+
+                </div>
+
+                <span class="text-sm text-gray-600 font-medium">Admin</span>
+
+                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- 返回按钮和我的绘本按钮 -->
+
+    <div class="fixed left-6 top-20 z-40">
+
+        <button onclick="goBack()" class="w-11 h-11 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all hover:-translate-x-1 flex items-center justify-center group">
+
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+
+        </button>
+
+    </div>
+
+    <div class="fixed right-6 top-20 z-40">
+
+        <button onclick="goToMyBooks()" title="我的绘本" class="w-11 h-11 bg-amber-500 hover:bg-amber-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center">
+
+            <i data-lucide="book-open" class="w-4 h-4"></i>
+
+        </button>
+
+    </div>
+
+
+
+    <!-- 主容器 -->
+
+    <div class="max-w-6xl mx-auto px-6 py-4 relative">
+
+
+
+        <!-- 页面标题 -->
+
+        <div class="text-center mt-4 mb-6">
+
+            <h1 class="text-4xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">
+
+                AI绘本
+
+            </h1>
+
+            <p class="text-gray-500 text-sm">用AI创造属于你的精彩故事</p>
+
+        </div>
+
+
+
+        <!-- 输入区域 -->
+
+        <div class="max-w-4xl mx-auto mb-5">
+
+            <div class="relative">
+
+                <textarea 
+
+                    id="storyInput"
+
+                    class="w-full h-28 px-5 py-3 border-2 border-gray-200 rounded-2xl focus:border-primary-400 focus:ring-4 focus:ring-primary-50 outline-none transition-all resize-none text-gray-700 placeholder-gray-400 shadow-sm hover:border-gray-300"
+
+                    placeholder="输入您想创作的绘本故事（如：一只寻找星星的勇敢小狐狸）"
+
+                ></textarea>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- 生成按钮 -->
+
+        <div class="text-center mb-8">
+
+            <button onclick="generateOutline()" class="px-10 py-3 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2">
+
+                <i data-lucide="wand-2" class="w-5 h-5"></i>
+
+                <span>生成大纲</span>
+
+            </button>
+
+        </div>
+
+
+
+        <!-- 精选绘本区域 -->
+
+        <div class="mt-6 max-w-[1400px] mx-auto">
+
+            <div class="flex items-center gap-2 mb-5">
+
+                <i data-lucide="star" class="w-5 h-5 text-amber-500"></i>
+
+                <h2 class="text-xl font-semibold text-gray-800">精选绘本</h2>
+
+            </div>
+
+            
+
+            <div class="grid grid-cols-5 gap-6">
+
+                <!-- 故事卡片 - 真实图片 4:3比例 -->
+
+                <div onclick="selectStory('丑小鸭的春天')" class="group cursor-pointer">
+
+                    <div class="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+
+                        <img src="images/丑小鸭的春天.png" alt="丑小鸭的春天" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+
+                    </div>
+
+                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">丑小鸭的春天</h3>
+
+                </div>
+
+
+
+                <div onclick="selectStory('狼来了')" class="group cursor-pointer">
+
+                    <div class="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+
+                        <img src="images/狼来了.png" alt="狼来了" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+
+                    </div>
+
+                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">狼来了</h3>
+
+                </div>
+
+
+
+                <div onclick="selectStory('青蛙王子')" class="group cursor-pointer">
+
+                    <div class="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+
+                        <img src="images/青蛙王子.png" alt="青蛙王子" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+
+                    </div>
+
+                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">青蛙王子</h3>
+
+                </div>
+
+
+
+                <div onclick="selectStory('亡羊补牢')" class="group cursor-pointer">
+
+                    <div class="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+
+                        <img src="images/亡羊补牢.png" alt="亡羊补牢" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+
+                    </div>
+
+                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">亡羊补牢</h3>
+
+                </div>
+
+
+
+                <div onclick="selectStory('守株待兔')" class="group cursor-pointer">
+
+                    <div class="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+
+                        <img src="images/守株待兔.png" alt="守株待兔" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+
+                    </div>
+
+                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">守株待兔</h3>
+
+                </div>
+
+
+
+                <div onclick="selectStory('灰姑娘')" class="group cursor-pointer">
+
+                    <div class="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+
+                        <img src="images/灰姑娘.png" alt="灰姑娘" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+
+                    </div>
+
+                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">灰姑娘</h3>
+
+                </div>
+
+
+
+                <div onclick="selectStory('卖火柴的小女孩')" class="group cursor-pointer">
+
+                    <div class="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+
+                        <img src="images/卖火柴的小女孩.png" alt="卖火柴的小女孩" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+
+                    </div>
+
+                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">卖火柴的小女孩</h3>
+
+                </div>
+
+
+
+                <div onclick="selectStory('海的女儿')" class="group cursor-pointer">
+
+                    <div class="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+
+                        <img src="images/海的女儿.png" alt="海的女儿" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+
+                    </div>
+
+                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">海的女儿</h3>
+
+                </div>
+
+
+
+                <div onclick="selectStory('狐假虎威')" class="group cursor-pointer">
+
+                    <div class="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+
+                        <img src="images/狐假虎威.png" alt="狐假虎威" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+
+                    </div>
+
+                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">狐假虎威</h3>
+
+                </div>
+
+
+
+                <div onclick="selectStory('龟兔赛跑')" class="group cursor-pointer">
+
+                    <div class="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+
+                        <img src="images/龟兔赛跑.png" alt="龟兔赛跑" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+
+                    </div>
+
+                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">龟兔赛跑</h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- 全屏大纲确认弹窗 -->
+
+    <div id="outlineModal" class="fixed inset-0 bg-white z-[60] hidden">
+
+        <!-- 顶部操作栏 -->
+
+        <div class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm">
+
+            <button onclick="closeOutlineModal()" class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+
+                <i data-lucide="x" class="w-5 h-5"></i>
+
+                <span class="font-medium">取消</span>
+
+            </button>
+
+            
+
+            <h2 class="text-xl font-bold text-gray-800">确认故事大纲</h2>
+
+            
+
+            <div class="flex items-center gap-3">
+
+                <button onclick="saveOutlineDraft()" class="flex items-center gap-2 px-5 py-2 border-2 border-primary-500 text-primary-600 bg-white rounded-lg font-medium hover:bg-primary-50 transition-all">
+
+                    <i data-lucide="save" class="w-4 h-4"></i>
+
+                    <span>保存草稿</span>
+
+                </button>
+
+                <button onclick="generateStorybookFromModal()" class="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all">
+
+                    <i data-lucide="wand-2" class="w-4 h-4"></i>
+
+                    <span>生成绘本</span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- 主内容区 -->
+
+        <div class="flex h-[calc(100vh-73px)] overflow-hidden">
+
+            <!-- 左侧侧边栏 -->
+
+            <aside class="w-[350px] bg-white border-r border-gray-200 overflow-y-auto p-5" style="scrollbar-width: thin;">
+
+                <!-- 标题区 -->
+
+                <div class="mb-5">
+
+                    <div id="modalStoryTitle" contenteditable="false" 
+
+                         class="text-2xl font-bold text-gray-800 px-3 py-2 rounded-lg border-2 border-transparent hover:bg-gray-50 hover:border-gray-200 cursor-pointer transition-all outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-50 focus:bg-white">
+
+                        丑小鸭的春天
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- 核心主题区 -->
+
+                <div class="mb-5">
+
+                    <div class="flex items-center gap-2 mb-2.5">
+
+                        <i data-lucide="lightbulb" class="w-4 h-4 text-amber-500"></i>
+
+                        <h3 class="text-sm font-semibold text-gray-700">核心主题</h3>
+
+                    </div>
+
+                    <div id="modalThemeContent" contenteditable="false"
+
+                         class="px-3 py-3 bg-primary-50 border-l-3 border-primary-400 rounded-lg text-sm text-gray-700 leading-relaxed cursor-pointer hover:bg-primary-100 transition-all outline-none focus:ring-2 focus:ring-primary-300 focus:bg-white min-h-[50px]">
+
+                        接纳自我，发现内在价值，真正的美丽源于身份认同与成长。
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- 主要角色区 -->
+
+                <div class="mb-5">
+
+                    <div class="flex justify-between items-center mb-2.5">
+
+                        <div class="flex items-center gap-2">
+
+                            <i data-lucide="users" class="w-4 h-4 text-primary-500"></i>
+
+                            <h3 class="text-sm font-semibold text-gray-700">主要角色</h3>
+
+                        </div>
+
+                        <button onclick="modalAddCharacter()" 
+
+                                class="flex items-center gap-1.5 px-2.5 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-xs rounded-lg transition-all hover:-translate-y-0.5 shadow-sm hover:shadow">
+
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+
+                            <span>添加</span>
+
+                        </button>
+
+                    </div>
+
+                    <div id="modalCharactersList"></div>
+
+                </div>
+
+
+
+                <!-- 主要场景区 -->
+
+                <div class="mb-5">
+
+                    <div class="flex justify-between items-center mb-2.5">
+
+                        <div class="flex items-center gap-2">
+
+                            <i data-lucide="map-pin" class="w-4 h-4 text-emerald-500"></i>
+
+                            <h3 class="text-sm font-semibold text-gray-700">主要场景</h3>
+
+                        </div>
+
+                        <button onclick="modalAddSetting()" 
+
+                                class="flex items-center gap-1.5 px-2.5 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-xs rounded-lg transition-all hover:-translate-y-0.5 shadow-sm hover:shadow">
+
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+
+                            <span>添加</span>
+
+                        </button>
+
+                    </div>
+
+                    <div id="modalSettingsList"></div>
+
+                </div>
+
+            </aside>
+
+
+
+            <!-- 右侧内容区 -->
+
+            <main class="flex-1 overflow-y-auto px-8 py-6" style="scrollbar-width: thin;">
+
+                <!-- 大纲标题 -->
+
+                <div class="flex items-center justify-center gap-3 mb-6">
+
+                    <i data-lucide="file-text" class="w-6 h-6 text-primary-500"></i>
+
+                    <h2 class="text-2xl font-bold text-gray-800">故事大纲</h2>
+
+                    <span id="modalOutlinePageCount" class="text-sm text-gray-500 font-normal">共 10 页</span>
+
+                </div>
+
+                
+
+                <div id="modalOutlineList" class="max-w-4xl mx-auto"></div>
+
+            </main>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Toast 提示 -->
+
+    <div id="toast" class="fixed top-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl z-[100] opacity-0 transition-opacity pointer-events-none"></div>
+
+
+
+    <!-- Confirm 确认对话框 -->
+
+    <div id="confirmModal" class="fixed inset-0 bg-black/50 z-[200] hidden flex items-center justify-center">
+
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all scale-95 opacity-0" id="confirmDialog">
+
+            <div class="p-6">
+
+                <div class="flex items-start gap-4">
+
+                    <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+
+                        <i data-lucide="alert-circle" class="w-6 h-6 text-amber-600"></i>
+
+                    </div>
+
+                    <div class="flex-1">
+
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2" id="confirmTitle">确认操作</h3>
+
+                        <p class="text-gray-600 text-sm leading-relaxed" id="confirmMessage">确定要执行此操作吗？</p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="border-t border-gray-100 p-4 flex gap-3 justify-end">
+
+                <button onclick="closeConfirm(false)" class="px-5 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all">
+
+                    取消
+
+                </button>
+
+                <button onclick="closeConfirm(true)" class="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-all" id="confirmButton">
+
+                    确定
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Alert 提示对话框 -->
+
+    <div id="alertModal" class="fixed inset-0 bg-black/50 z-[200] hidden flex items-center justify-center">
+
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all scale-95 opacity-0" id="alertDialog">
+
+            <div class="p-6">
+
+                <div class="flex items-start gap-4">
+
+                    <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+
+                        <i data-lucide="info" class="w-6 h-6 text-blue-600"></i>
+
+                    </div>
+
+                    <div class="flex-1">
+
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">提示</h3>
+
+                        <p class="text-gray-600 text-sm leading-relaxed" id="alertMessage">这是一条提示信息</p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="border-t border-gray-100 p-4 flex justify-end">
+
+                <button onclick="closeAlert()" class="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-all">
+
+                    确定
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- 绘本阅读器全屏弹窗 -->
+    <div id="storybookViewer" class="fixed inset-0 bg-black/90 z-[200] hidden">
+        <!-- 顶部工具栏 -->
+        <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm">
+            <button onclick="closeStorybookViewer()" class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+                <i data-lucide="x" class="w-5 h-5"></i>
+                <span class="font-medium">关闭</span>
+            </button>
+            
+            <h2 id="storybookTitle" class="text-xl font-bold text-gray-800">丑小鸭的春天</h2>
+            
+            <div class="flex items-center gap-2 text-sm text-gray-600">
+                <span id="currentPageNum">1</span>
+                <span>/</span>
+                <span id="totalPageNum">12</span>
+            </div>
+        </header>
+
+        <!-- 主阅读区 -->
+        <main class="h-[calc(100vh-136px)] flex items-center justify-center px-8 py-6">
+            <div class="flex gap-8 h-full">
+                <!-- 左侧图片区 - 保持图片原始比例 -->
+                <div id="imageContainer" class="h-full flex items-center justify-center bg-white rounded-2xl shadow-2xl overflow-hidden">
+                    <img id="storybookImage" src="" alt="绘本插图" class="h-full w-auto object-contain" style="opacity: 1; transition: opacity 0.4s ease-out, transform 0.4s ease-out;">
+                </div>
+
+                <!-- 右侧文字区 - 与图片等高 -->
+                <div id="textContainer" class="h-full bg-white rounded-2xl shadow-2xl p-12 flex flex-col justify-center relative" style="aspect-ratio: 1 / 1; opacity: 1; transition: opacity 0.4s ease-out, transform 0.4s ease-out;">
+                    <div id="storybookText" class="text-gray-800 text-2xl leading-relaxed space-y-4">
+                        春天来了，在温暖的芦苇丛里，鸭妈妈正在孵蛋。窝里的小家伙们都出来了，只有那颗最大、最特别的蛋还静悄悄的。
+                    </div>
+                    <!-- 页码 - 右下角 -->
+                    <div class="absolute bottom-8 right-8 text-2xl font-medium text-gray-400">
+                        <span id="pageNumberDisplay">1</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部翻页控制 -->
+        <footer class="bg-white border-t border-gray-200 px-6 py-4 shadow-sm">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <button id="prevPageBtn" onclick="previousPage()" class="flex items-center gap-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    <span>上一页</span>
+                </button>
+
+                <!-- 页码指示器 -->
+                <div class="flex items-center gap-2">
+                    <div id="pageIndicators" class="flex gap-2"></div>
+                </div>
+
+                <button id="nextPageBtn" onclick="nextPage()" class="flex items-center gap-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500">
+                    <span>下一页</span>
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- AI生成加载遮罩 -->
+    <div id="aiLoadingModal" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-[150] hidden flex items-center justify-center">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full mx-4 p-8 transform transition-all scale-95 opacity-0" id="aiLoadingCard">
+            
+            <!-- 顶部动画区 -->
+            <div class="flex justify-center items-center h-24 mb-6">
+                <div class="relative">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-r from-primary-400 to-purple-500 animate-pulse"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <i data-lucide="sparkles" class="w-10 h-10 text-white animate-spin-slow"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主标题 -->
+            <h2 class="text-2xl font-bold text-gray-800 text-center mb-8">AI 正在创作您的绘本大纲</h2>
+
+            <!-- 四阶段状态区 -->
+            <div class="space-y-6 mb-8">
+                <!-- 阶段1 -->
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-6 h-6 mt-0.5">
+                        <i id="stage1-icon" data-lucide="clock" class="w-6 h-6 text-gray-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-gray-800">分析故事主题</span>
+                            <span id="stage1-status" class="text-sm text-gray-500">等待中</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div id="stage1-progress" class="h-full bg-gradient-to-r from-primary-500 to-purple-600 rounded-full" style="width: 0%; transition: width 0.3s ease-out;"></div>
+                            </div>
+                            <span id="stage1-percent" class="text-sm font-medium text-gray-600 w-12 text-right">0%</span>
+                        </div>
+                        <p id="stage1-detail" class="text-sm text-gray-500 mt-2 min-h-5"></p>
+                    </div>
+                </div>
+
+                <!-- 阶段2 -->
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-6 h-6 mt-0.5">
+                        <i id="stage2-icon" data-lucide="clock" class="w-6 h-6 text-gray-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-gray-800">生成角色设定</span>
+                            <span id="stage2-status" class="text-sm text-gray-500">等待中</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div id="stage2-progress" class="h-full bg-gradient-to-r from-primary-500 to-purple-600 rounded-full" style="width: 0%; transition: width 0.3s ease-out;"></div>
+                            </div>
+                            <span id="stage2-percent" class="text-sm font-medium text-gray-600 w-12 text-right">0%</span>
+                        </div>
+                        <p id="stage2-detail" class="text-sm text-gray-500 mt-2 min-h-5"></p>
+                    </div>
+                </div>
+
+                <!-- 阶段3 -->
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-6 h-6 mt-0.5">
+                        <i id="stage3-icon" data-lucide="clock" class="w-6 h-6 text-gray-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-gray-800">生成场景设定</span>
+                            <span id="stage3-status" class="text-sm text-gray-500">等待中</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div id="stage3-progress" class="h-full bg-gradient-to-r from-primary-500 to-purple-600 rounded-full" style="width: 0%; transition: width 0.3s ease-out;"></div>
+                            </div>
+                            <span id="stage3-percent" class="text-sm font-medium text-gray-600 w-12 text-right">0%</span>
+                        </div>
+                        <p id="stage3-detail" class="text-sm text-gray-500 mt-2 min-h-5"></p>
+                    </div>
+                </div>
+
+                <!-- 阶段4 -->
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-6 h-6 mt-0.5">
+                        <i id="stage4-icon" data-lucide="clock" class="w-6 h-6 text-gray-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-gray-800">生成故事大纲</span>
+                            <span id="stage4-status" class="text-sm text-gray-500">等待中</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div id="stage4-progress" class="h-full bg-gradient-to-r from-primary-500 to-purple-600 rounded-full" style="width: 0%; transition: width 0.3s ease-out;"></div>
+                            </div>
+                            <span id="stage4-percent" class="text-sm font-medium text-gray-600 w-12 text-right">0%</span>
+                        </div>
+                        <p id="stage4-detail" class="text-sm text-gray-500 mt-2 min-h-5"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 总体进度条 -->
+            <div class="mb-6">
+                <div class="flex items-center gap-4">
+                    <div class="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div id="total-progress" class="h-full bg-gradient-to-r from-primary-500 to-purple-600 rounded-full" style="width: 0%; transition: width 0.3s ease-out;"></div>
+                    </div>
+                    <span id="total-percent" class="text-2xl font-bold text-gray-800 w-16 text-right">0%</span>
+                </div>
+            </div>
+
+            <!-- 底部提示 -->
+            <div class="text-center">
+                <p id="loading-tip" class="text-sm text-gray-500 flex items-center justify-center gap-2">
+                    <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                    <span>AI正在发挥创意，请稍候...</span>
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <script>
+
+        // 初始化 Lucide 图标
+
+        lucide.createIcons();
+
+
+
+        // ========== 自定义对话框组件 ==========
+
+        
+
+        let confirmCallback = null;
+
+        
+
+        // 自定义 Confirm 对话框
+
+        function showConfirm(message, title = '确认操作', confirmText = '确定') {
+
+            return new Promise((resolve) => {
+
+                const modal = document.getElementById('confirmModal');
+
+                const dialog = document.getElementById('confirmDialog');
+
+                const titleEl = document.getElementById('confirmTitle');
+
+                const messageEl = document.getElementById('confirmMessage');
+
+                const confirmBtn = document.getElementById('confirmButton');
+
+                
+
+                titleEl.textContent = title;
+
+                messageEl.textContent = message;
+
+                confirmBtn.textContent = confirmText;
+
+                
+
+                confirmCallback = resolve;
+
+                
+
+                modal.classList.remove('hidden');
+
+                setTimeout(() => {
+
+                    dialog.classList.remove('scale-95', 'opacity-0');
+
+                    dialog.classList.add('scale-100', 'opacity-100');
+
+                }, 10);
+
+                
+
+                lucide.createIcons();
+
+            });
+
+        }
+
+        
+
+        function closeConfirm(result) {
+
+            const modal = document.getElementById('confirmModal');
+
+            const dialog = document.getElementById('confirmDialog');
+
+            
+
+            dialog.classList.add('scale-95', 'opacity-0');
+
+            dialog.classList.remove('scale-100', 'opacity-100');
+
+            
+
+            setTimeout(() => {
+
+                modal.classList.add('hidden');
+
+                if (confirmCallback) {
+
+                    confirmCallback(result);
+
+                    confirmCallback = null;
+
+                }
+
+            }, 200);
+
+        }
+
+        
+
+        // 自定义 Alert 对话框
+
+        function showAlert(message, title = '提示') {
+
+            return new Promise((resolve) => {
+
+                const modal = document.getElementById('alertModal');
+
+                const dialog = document.getElementById('alertDialog');
+
+                const messageEl = document.getElementById('alertMessage');
+
+                
+
+                messageEl.textContent = message;
+
+                
+
+                window.alertCallback = resolve;
+
+                
+
+                modal.classList.remove('hidden');
+
+                setTimeout(() => {
+
+                    dialog.classList.remove('scale-95', 'opacity-0');
+
+                    dialog.classList.add('scale-100', 'opacity-100');
+
+                }, 10);
+
+                
+
+                lucide.createIcons();
+
+            });
+
+        }
+
+        
+
+        function closeAlert() {
+
+            const modal = document.getElementById('alertModal');
+
+            const dialog = document.getElementById('alertDialog');
+
+            
+
+            dialog.classList.add('scale-95', 'opacity-0');
+
+            dialog.classList.remove('scale-100', 'opacity-100');
+
+            
+
+            setTimeout(() => {
+
+                modal.classList.add('hidden');
+
+                if (window.alertCallback) {
+
+                    window.alertCallback();
+
+                    window.alertCallback = null;
+
+                }
+
+            }, 200);
+
+        }
+
+
+
+        // 返回上一页
+
+        async function goBack() {
+
+            const confirmed = await showConfirm('确定要返回吗？', '返回确认');
+
+            if (confirmed) {
+
+                window.history.back();
+
+            }
+
+        }
+
+
+
+        // 进入我的绘本页面
+
+        async function goToMyBooks() {
+
+            await showAlert('跳转到我的绘本页面');
+
+            // window.location.href = 'my-books.html';
+
+        }
+
+
+
+        // 生成大纲
+
+        async function generateOutline() {
+
+            const storyInput = document.getElementById('storyInput').value.trim();
+
+            
+
+            if (!storyInput) {
+
+                await showAlert('请先输入故事创意！');
+
+                return;
+
+            }
+
+
+
+            // 显示AI加载动画
+            showAILoading();
+        }
+
+        // 显示AI加载动画
+        function showAILoading() {
+            const modal = document.getElementById('aiLoadingModal');
+            const card = document.getElementById('aiLoadingCard');
+            
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // 禁止背景滚动
+            
+            setTimeout(() => {
+                card.classList.remove('scale-95', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            
+            lucide.createIcons();
+            
+            // 开始进度模拟
+            startAILoadingProgress();
+        }
+
+        // 关闭AI加载动画
+        function closeAILoading() {
+            const modal = document.getElementById('aiLoadingModal');
+            const card = document.getElementById('aiLoadingCard');
+            
+            card.classList.add('scale-95', 'opacity-0');
+            card.classList.remove('scale-100', 'opacity-100');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // 更新阶段状态
+        function updateStageStatus(stage, status, progress, detail = '') {
+            const icon = document.getElementById(`stage${stage}-icon`);
+            const statusText = document.getElementById(`stage${stage}-status`);
+            const progressBar = document.getElementById(`stage${stage}-progress`);
+            const percentText = document.getElementById(`stage${stage}-percent`);
+            const detailText = document.getElementById(`stage${stage}-detail`);
+            
+            // 更新图标
+            if (status === 'waiting') {
+                icon.outerHTML = '<i id="stage' + stage + '-icon" data-lucide="clock" class="w-6 h-6 text-gray-400"></i>';
+            } else if (status === 'processing') {
+                icon.outerHTML = '<i id="stage' + stage + '-icon" data-lucide="loader-2" class="w-6 h-6 text-blue-500 animate-spin"></i>';
+            } else if (status === 'completed') {
+                icon.outerHTML = '<i id="stage' + stage + '-icon" data-lucide="check-circle" class="w-6 h-6 text-green-500"></i>';
+            }
+            
+            // 更新状态文字
+            if (status === 'waiting') {
+                statusText.textContent = '等待中';
+                statusText.className = 'text-sm text-gray-500';
+            } else if (status === 'processing') {
+                statusText.textContent = '进行中';
+                statusText.className = 'text-sm text-blue-500';
+            } else if (status === 'completed') {
+                statusText.textContent = '已完成';
+                statusText.className = 'text-sm text-green-500';
+            }
+            
+            // 更新进度条
+            progressBar.style.width = progress + '%';
+            percentText.textContent = Math.round(progress) + '%';
+            
+            // 更新详细信息
+            detailText.textContent = detail;
+            
+            lucide.createIcons();
+        }
+
+        // 更新总进度
+        function updateTotalProgress(progress) {
+            const progressBar = document.getElementById('total-progress');
+            const percentText = document.getElementById('total-percent');
+            
+            progressBar.style.width = progress + '%';
+            percentText.textContent = Math.round(progress) + '%';
+        }
+
+        // 更新提示文案
+        function updateLoadingTip(tip) {
+            const tipElement = document.getElementById('loading-tip');
+            tipElement.innerHTML = `<i data-lucide="lightbulb" class="w-4 h-4"></i><span>${tip}</span>`;
+            lucide.createIcons();
+        }
+
+        // 开始进度模拟（10秒演示版）
+        function startAILoadingProgress() {
+            const totalDuration = 10000; // 总时长10秒
+            const startTime = Date.now();
+            
+            const tips = [
+                'AI正在发挥创意，请稍候...',
+                '生成的大纲可以在下一步自由编辑哦~',
+                '精彩的故事即将诞生...',
+                '您可以调整角色、场景和情节内容~'
+            ];
+            
+            let currentTipIndex = 0;
+            
+            // 提示文案轮播（每2.5秒切换）
+            const tipInterval = setInterval(() => {
+                currentTipIndex = (currentTipIndex + 1) % tips.length;
+                updateLoadingTip(tips[currentTipIndex]);
+            }, 2500);
+            
+            // 使用setInterval代替requestAnimationFrame，每50ms更新一次
+            const updateInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                
+                // 阶段1: 0-1s (0-8%)
+                if (elapsed < 1000) {
+                    const stage1Progress = (elapsed / 1000) * 100;
+                    updateStageStatus(1, 'processing', stage1Progress, '');
+                    updateTotalProgress(stage1Progress * 0.08); // 0-8%
+                } 
+                // 阶段1完成
+                else if (elapsed >= 1000 && elapsed < 1050) {
+                    updateStageStatus(1, 'completed', 100, '核心主题：善良与真诚终将获得幸福...');
+                    updateTotalProgress(8);
+                }
+                
+                // 阶段2: 1-3.5s (8-25%)
+                else if (elapsed >= 1050 && elapsed < 3500) {
+                    const stage2Progress = ((elapsed - 1050) / 2450) * 100;
+                    updateStageStatus(2, 'processing', stage2Progress, '');
+                    updateTotalProgress(8 + stage2Progress * 0.17); // 8% + 17% = 25%
+                }
+                // 阶段2完成
+                else if (elapsed >= 3500 && elapsed < 3550) {
+                    updateStageStatus(2, 'completed', 100, '已生成 4 个角色');
+                    updateTotalProgress(25);
+                }
+                
+                // 阶段3: 3.5-6s (25-40%)
+                else if (elapsed >= 3550 && elapsed < 6000) {
+                    const stage3Progress = ((elapsed - 3550) / 2450) * 100;
+                    updateStageStatus(3, 'processing', stage3Progress, '');
+                    updateTotalProgress(25 + stage3Progress * 0.15); // 25% + 15% = 40%
+                }
+                // 阶段3完成
+                else if (elapsed >= 6000 && elapsed < 6050) {
+                    updateStageStatus(3, 'completed', 100, '已生成 3 个场景');
+                    updateTotalProgress(40);
+                }
+                
+                // 阶段4: 6-10s (40-100%) - 主要时间
+                else if (elapsed >= 6050 && elapsed < 10000) {
+                    const stage4Progress = ((elapsed - 6050) / 3950) * 100;
+                    
+                    // 计算当前页码（假设15页）
+                    const currentPage = Math.min(Math.ceil(stage4Progress / 100 * 15), 15);
+                    updateStageStatus(4, 'processing', stage4Progress, `正在编写第 ${currentPage} 页，共 15 页`);
+                    
+                    updateTotalProgress(40 + stage4Progress * 0.6); // 40% + 60% = 100%
+                }
+                // 阶段4完成
+                else if (elapsed >= 10000) {
+                    updateStageStatus(4, 'completed', 100, '已完成 15 页故事大纲');
+                    updateTotalProgress(100);
+                    
+                    clearInterval(tipInterval);
+                    clearInterval(updateInterval); // 停止更新
+                    
+                    // 延迟500ms后关闭加载动画，打开大纲确认弹窗
+                    setTimeout(() => {
+                        closeAILoading();
+            setTimeout(() => {
+
+                openOutlineModal();
+
+                        }, 300);
+            }, 500);
+
+                }
+            }, 50); // 每50ms更新一次
+        }
+
+
+
+        // 选择精选故事
+
+        async function selectStory(storyName) {
+
+            // 如果是"丑小鸭的春天"，直接打开阅读器
+            if (storyName === '丑小鸭的春天') {
+                openStorybookViewer();
+                return;
+            }
+            
+            // 其他绘本暂时没有效果（原型阶段）
+            return;
+        }
+
+        // ========== 绘本阅读器功能 ==========
+        
+        // 绘本数据
+        const storybookData = {
+            title: "丑小鸭的春天",
+            pages: [
+                {
+                    pageNumber: 1,
+                    image: "images/1.png",
+                    text: "春天来了，在温暖的芦苇丛里，鸭妈妈正在孵蛋。窝里的小家伙们都出来了，只有那颗最大、最特别的蛋还静悄悄的。"
+                },
+                {
+                    pageNumber: 2,
+                    image: "images/2.png",
+                    text: "\"咔嚓！\"一声，蛋壳终于裂开了。里面钻出来一只毛茸茸的小家伙，可他长得又大又灰，一点也不像其他的小鸭子。"
+                },
+                {
+                    pageNumber: 3,
+                    image: "images/3.png",
+                    text: "农场里的其他小动物看见了他，都围过来指指点点。\"看啊，他长得真奇怪！\"小鸡和小猫也都跟着嘲笑他。"
+                },
+                {
+                    pageNumber: 4,
+                    image: "images/4.png",
+                    text: "小灰心里难过极了。他看着水里自己灰色的倒影，觉得自己是世界上最孤单的\"鸭子\"。"
+                },
+                {
+                    pageNumber: 5,
+                    image: "images/5.png",
+                    text: "终于，他再也受不了了。在一个清晨，他悄悄地离开了池塘，决定去寻找一个能接纳他的地方。"
+                },
+                {
+                    pageNumber: 6,
+                    image: "images/6.png",
+                    text: "他来到一片荒凉的沼泽。秋风瑟瑟，他害怕地躲在枯黄的芦苇里，又冷又饿，只能把自己缩成一团。"
+                },
+                {
+                    pageNumber: 7,
+                    image: "images/7.png",
+                    text: "寒冷的冬天来临了，沼泽结了厚厚的冰。可怜的小灰在水里游着，最后被牢牢地冻在了冰面上，动弹不得。"
+                },
+                {
+                    pageNumber: 8,
+                    image: "images/8.png",
+                    text: "一位善良的农夫发现了他，小心翼翼地凿开冰块，把他带回了自己温暖的小屋里，放在壁炉旁边。"
+                },
+                {
+                    pageNumber: 9,
+                    image: "images/9.png",
+                    text: "屋子里的吵闹声把他惊醒了。惊慌失措的小灰跌跌撞撞，打翻了地上的牛奶盆，又一次仓皇地逃了出去。"
+                },
+                {
+                    pageNumber: 10,
+                    image: "images/10.png",
+                    text: "不知不觉，春天又来了。小灰来到一个美丽的湖边，他看到一群洁白优雅的鸟儿在水中游弋，美得让他看呆了。"
+                },
+                {
+                    pageNumber: 11,
+                    image: "images/11.png",
+                    text: "他自卑地低下头，却在清澈如镜的湖水中，看到了一个全新的自己——一只同样洁白、美丽的青年天鹅！"
+                },
+                {
+                    pageNumber: 12,
+                    image: "images/12.png",
+                    text: "天鹅们热情地向他游来，欢迎他回家。小灰展开翅膀，流下了喜悦的泪水。他终于明白，自己不是丑小鸭，而是一只最特别的小天鹅。"
+                }
+            ]
+        };
+
+        let currentPage = 1;
+        let isPageTransitioning = false; // 防止快速翻页
+        const imageCache = {}; // 图片缓存
+
+        // 预加载图片
+        function preloadImage(src) {
+            return new Promise((resolve, reject) => {
+                if (imageCache[src]) {
+                    resolve(imageCache[src]);
+                    return;
+                }
+                
+                const img = new Image();
+                img.onload = () => {
+                    imageCache[src] = img;
+                    resolve(img);
+                };
+                img.onerror = reject;
+                img.src = src;
+            });
+        }
+
+        // 预加载相邻页面的图片
+        function preloadAdjacentPages(pageNum) {
+            const prevPage = storybookData.pages[pageNum - 2];
+            const nextPage = storybookData.pages[pageNum];
+            
+            if (prevPage) {
+                preloadImage(prevPage.image).catch(() => {});
+            }
+            if (nextPage) {
+                preloadImage(nextPage.image).catch(() => {});
+            }
+        }
+
+        // 打开绘本阅读器
+        function openStorybookViewer(startPage = 1) {
+            currentPage = startPage;
+            const viewer = document.getElementById('storybookViewer');
+            
+            viewer.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            // 设置标题和总页数
+            document.getElementById('storybookTitle').textContent = storybookData.title;
+            document.getElementById('totalPageNum').textContent = storybookData.pages.length;
+            
+            // 渲染页码指示器
+            renderPageIndicators();
+            
+            // 显示当前页
+            showPage(currentPage);
+            
+            // 预加载所有图片(优化用户体验)
+            storybookData.pages.forEach(page => {
+                preloadImage(page.image).catch(() => {});
+            });
+            
+            lucide.createIcons();
+        }
+
+        // 关闭绘本阅读器
+        function closeStorybookViewer() {
+            const viewer = document.getElementById('storybookViewer');
+            viewer.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // 显示指定页(带平滑过渡)
+        async function showPage(pageNum) {
+            if (isPageTransitioning) return;
+            
+            const page = storybookData.pages[pageNum - 1];
+            if (!page) return;
+            
+            isPageTransitioning = true;
+            
+            const imageEl = document.getElementById('storybookImage');
+            const textEl = document.getElementById('storybookText');
+            const imageContainer = document.getElementById('imageContainer');
+            const textContainer = document.getElementById('textContainer');
+            
+            // 步骤1: 淡出当前内容
+            imageEl.style.opacity = '0';
+            imageEl.style.transform = 'scale(0.95)';
+            textContainer.style.opacity = '0';
+            textContainer.style.transform = 'translateY(10px)';
+            
+            // 步骤2: 显示加载状态
+            imageContainer.classList.add('image-loading');
+            
+            // 步骤3: 预加载新图片
+            try {
+                await preloadImage(page.image);
+                
+                // 等待淡出动画完成
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                // 步骤4: 更新内容
+                imageEl.src = page.image;
+                textEl.textContent = page.text;
+                
+                // 更新页码显示
+                document.getElementById('currentPageNum').textContent = pageNum;
+                document.getElementById('pageNumberDisplay').textContent = pageNum;
+                
+                // 步骤5: 移除加载状态
+                imageContainer.classList.remove('image-loading');
+                
+                // 步骤6: 淡入新内容
+                await new Promise(resolve => setTimeout(resolve, 50));
+                imageEl.style.opacity = '1';
+                imageEl.style.transform = 'scale(1)';
+                textContainer.style.opacity = '1';
+                textContainer.style.transform = 'translateY(0)';
+                
+            } catch (error) {
+                console.error('图片加载失败:', error);
+                imageContainer.classList.remove('image-loading');
+                // 即使加载失败也要显示内容
+                imageEl.src = page.image;
+                textEl.textContent = page.text;
+                imageEl.style.opacity = '1';
+                imageEl.style.transform = 'scale(1)';
+                textContainer.style.opacity = '1';
+                textContainer.style.transform = 'translateY(0)';
+            }
+            
+            // 更新按钮状态
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+            
+            prevBtn.disabled = pageNum === 1;
+            nextBtn.disabled = pageNum === storybookData.pages.length;
+            
+            // 更新页码指示器
+            updatePageIndicators(pageNum);
+            
+            // 预加载相邻页面
+            preloadAdjacentPages(pageNum);
+            
+            // 等待过渡完成
+            await new Promise(resolve => setTimeout(resolve, 400));
+            isPageTransitioning = false;
+        }
+
+        // 渲染页码指示器
+        function renderPageIndicators() {
+            const container = document.getElementById('pageIndicators');
+            const totalPages = storybookData.pages.length;
+            
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                html += `
+                    <button onclick="goToPage(${i})" 
+                            class="page-indicator w-2.5 h-2.5 rounded-full transition-all ${i === currentPage ? 'bg-primary-500 w-8' : 'bg-gray-300 hover:bg-gray-400'}" 
+                            data-page="${i}">
+                    </button>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // 更新页码指示器
+        function updatePageIndicators(pageNum) {
+            const indicators = document.querySelectorAll('.page-indicator');
+            indicators.forEach((indicator, index) => {
+                if (index + 1 === pageNum) {
+                    indicator.classList.remove('bg-gray-300', 'hover:bg-gray-400', 'w-2.5');
+                    indicator.classList.add('bg-primary-500', 'w-8');
+                } else {
+                    indicator.classList.remove('bg-primary-500', 'w-8');
+                    indicator.classList.add('bg-gray-300', 'hover:bg-gray-400', 'w-2.5');
+                }
+            });
+        }
+
+        // 上一页
+        function previousPage() {
+            if (isPageTransitioning) return;
+            if (currentPage > 1) {
+                currentPage--;
+                showPage(currentPage);
+            }
+        }
+
+        // 下一页
+        function nextPage() {
+            if (isPageTransitioning) return;
+            if (currentPage < storybookData.pages.length) {
+                currentPage++;
+                showPage(currentPage);
+            }
+        }
+
+        // 跳转到指定页
+        function goToPage(pageNum) {
+            if (isPageTransitioning) return;
+            if (pageNum === currentPage) return;
+            currentPage = pageNum;
+            showPage(currentPage);
+        }
+
+        // 键盘快捷键支持
+        document.addEventListener('keydown', function(e) {
+            const viewer = document.getElementById('storybookViewer');
+            if (!viewer.classList.contains('hidden')) {
+                if (e.key === 'ArrowLeft') {
+                    previousPage();
+                } else if (e.key === 'ArrowRight') {
+                    nextPage();
+                } else if (e.key === 'Escape') {
+                    closeStorybookViewer();
+                }
+            }
+        });
+
+
+        // 监听Enter键（Ctrl+Enter提交）
+
+        document.getElementById('storyInput').addEventListener('keydown', function(e) {
+
+            if (e.ctrlKey && e.key === 'Enter') {
+
+                generateOutline();
+
+            }
+
+        });
+
+
+
+        // ========== 大纲弹窗相关功能 ==========
+
+        
+
+        // 故事数据
+
+        let modalStoryData = {
+
+            "core_elements": {
+
+                "title": "丑小鸭的春天",
+
+                "characters": [
+
+                    {"name": "丑小鸭（小鸭子）", "description": "外表与众不同，羽毛灰扑扑，性格敏感善良，渴望被接纳，最终发现自己是一只美丽的天鹅。"},
+
+                    {"name": "农场动物们（鸡、鸭、鹅等）", "description": "起初嘲笑和排挤丑小鸭，代表外界的偏见和不理解。"},
+
+                    {"name": "天鹅群", "description": "优雅友善，最终接纳丑小鸭，象征真正的归属与自我认同。"}
+
+                ],
+
+                "theme": "接纳自我，发现内在价值，真正的美丽源于身份认同与成长。",
+
+                "settings": [
+
+                    {"name": "农场池塘", "description": "故事开端，充满喧闹与排斥，是丑小鸭最初被误解的地方。"},
+
+                    {"name": "荒野沼泽", "description": "丑小鸭流浪的孤独之地，经历寒冷与寂寞，象征成长的考验。"},
+
+                    {"name": "春日湖泊", "description": "故事结局，宁静美丽，丑小鸭在此遇见天鹅群并认出自己的真实身份。"}
+
+                ],
+
+                "page_count": 10
+
+            },
+
+            "outline": [
+
+                {"page_number": 1, "scene": "农场池塘", "plot_summary": "在一个阳光明媚的农场池塘边，鸭妈妈孵出了一窝小鸭，其中一只灰扑扑的小鸭格外与众不同。"},
+
+                {"page_number": 2, "scene": "农场池塘", "plot_summary": "鸡、鸭和鹅都嘲笑他'丑'，不愿和他玩耍，丑小鸭感到伤心又孤单。"},
+
+                {"page_number": 3, "scene": "农场池塘", "plot_summary": "无论他怎么努力融入，大家还是排斥他，丑小鸭决定离开农场，去寻找属于自己的地方。"},
+
+                {"page_number": 4, "scene": "荒野沼泽", "plot_summary": "丑小鸭独自流浪到寒冷的沼泽，风吹雨打，他只能躲在芦苇丛中瑟瑟发抖。"},
+
+                {"page_number": 5, "scene": "荒野沼泽", "plot_summary": "野鸭和大雁对他好奇却冷漠，他依然找不到朋友，冬天来了，他几乎冻僵。"},
+
+                {"page_number": 6, "scene": "荒野沼泽", "plot_summary": "一位农夫好心收留他，但家里的猫和母鸡也嫌弃他，丑小鸭再次选择离开。"},
+
+                {"page_number": 7, "scene": "荒野沼泽", "plot_summary": "漫长的冬天过去，丑小鸭在雪地里挣扎求生，心中始终怀着一丝希望。"},
+
+                {"page_number": 8, "scene": "春日湖泊", "plot_summary": "春天来临，冰雪融化，丑小鸭来到一片清澈宁静的湖泊，水面倒映出他修长的脖颈和洁白的羽毛。"},
+
+                {"page_number": 9, "scene": "春日湖泊", "plot_summary": "一群优雅的天鹅游向他，热情地欢迎他加入，丑小鸭终于明白自己不是丑小鸭，而是一只天鹅。"},
+
+                {"page_number": 10, "scene": "春日湖泊", "plot_summary": "丑小鸭在天鹅群中快乐地游泳、飞翔，他不再自卑，因为他找到了真正的自己和温暖的家。"}
+
+            ]
+
+        };
+
+
+
+        // 打开弹窗
+
+        function openOutlineModal() {
+
+            document.getElementById('outlineModal').classList.remove('hidden');
+
+            document.body.style.overflow = 'hidden'; // 禁止背景滚动
+
+            initModalContent();
+
+            lucide.createIcons();
+
+        }
+
+
+
+        // 关闭弹窗
+
+        async function closeOutlineModal() {
+
+            const confirmed = await showConfirm(
+
+                '确定要关闭吗？未保存的修改将会丢失。',
+
+                '关闭确认'
+
+            );
+
+            if (confirmed) {
+
+                document.getElementById('outlineModal').classList.add('hidden');
+
+                document.body.style.overflow = ''; // 恢复背景滚动
+
+            }
+
+        }
+
+
+
+        // 初始化弹窗内容
+
+        function initModalContent() {
+
+            modalRenderCharacters();
+
+            modalRenderSettings();
+
+            modalRenderOutline();
+
+            modalSetupEditableElements();
+
+            modalUpdatePageCount();
+
+        }
+
+
+
+        // 设置可编辑元素
+
+        function modalSetupEditableElements() {
+
+            const title = document.getElementById('modalStoryTitle');
+
+            const theme = document.getElementById('modalThemeContent');
+
+
+
+            title.addEventListener('click', function() {
+
+                this.contentEditable = 'true';
+
+                this.focus();
+
+            });
+
+            title.addEventListener('blur', function() {
+
+                this.contentEditable = 'false';
+
+                modalStoryData.core_elements.title = this.textContent.trim();
+
+            });
+
+
+
+            theme.addEventListener('click', function() {
+
+                this.contentEditable = 'true';
+
+                this.focus();
+
+            });
+
+            theme.addEventListener('blur', function() {
+
+                this.contentEditable = 'false';
+
+                modalStoryData.core_elements.theme = this.textContent.trim();
+
+            });
+
+        }
+
+
+
+        // 更新页数
+
+        function modalUpdatePageCount() {
+
+            const count = modalStoryData.outline.length;
+
+            modalStoryData.core_elements.page_count = count;
+
+            document.getElementById('modalOutlinePageCount').textContent = `共 ${count} 页`;
+
+        }
+
+
+
+        // 渲染角色列表
+
+        function modalRenderCharacters() {
+
+            const container = document.getElementById('modalCharactersList');
+
+            if (modalStoryData.core_elements.characters.length === 0) {
+
+                container.innerHTML = '<div class="text-center py-6 text-sm text-gray-400">暂无角色</div>';
+
+                return;
+
+            }
+
+
+
+            container.innerHTML = modalStoryData.core_elements.characters.map((char, index) => `
+
+                <div class="group relative bg-white border border-gray-200 rounded-xl p-3 mb-2.5 hover:border-primary-300 hover:shadow-sm transition-all">
+
+                    <button onclick="modalDeleteCharacter(${index})" 
+
+                            class="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+
+                    </button>
+
+                    <div onclick="modalEditCardField(this, 'characters', ${index}, 'name')" 
+
+                         class="text-sm font-semibold text-gray-800 mb-1.5 px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer">${char.name}</div>
+
+                    <div onclick="modalEditCardField(this, 'characters', ${index}, 'description')" 
+
+                         class="text-xs text-gray-600 leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px]">${char.description}</div>
+
+                </div>
+
+            `).join('');
+
+            lucide.createIcons();
+
+        }
+
+
+
+        // 渲染场景列表
+
+        function modalRenderSettings() {
+
+            const container = document.getElementById('modalSettingsList');
+
+            if (modalStoryData.core_elements.settings.length === 0) {
+
+                container.innerHTML = '<div class="text-center py-6 text-sm text-gray-400">暂无场景</div>';
+
+                return;
+
+            }
+
+
+
+            container.innerHTML = modalStoryData.core_elements.settings.map((setting, index) => `
+
+                <div class="group relative bg-white border border-gray-200 rounded-xl p-3 mb-2.5 hover:border-emerald-300 hover:shadow-sm transition-all">
+
+                    <button onclick="modalDeleteSetting(${index})" 
+
+                            class="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+
+                    </button>
+
+                    <div onclick="modalEditCardField(this, 'settings', ${index}, 'name')" 
+
+                         class="text-sm font-semibold text-gray-800 mb-1.5 px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer">${setting.name}</div>
+
+                    <div onclick="modalEditCardField(this, 'settings', ${index}, 'description')" 
+
+                         class="text-xs text-gray-600 leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px]">${setting.description}</div>
+
+                </div>
+
+            `).join('');
+
+            lucide.createIcons();
+
+            modalRenderOutline();
+
+        }
+
+
+
+        // 渲染大纲
+
+        function modalRenderOutline(highlightIndex = -1) {
+
+            const container = document.getElementById('modalOutlineList');
+
+            const settingNames = modalStoryData.core_elements.settings.map(s => s.name);
+
+            const pageCount = modalStoryData.outline.length;
+
+            const canAdd = pageCount < 20;
+
+            const canDelete = pageCount > 6;
+
+
+
+            let html = '';
+
+            
+
+            modalStoryData.outline.forEach((page, index) => {
+
+                // 在每页之前添加插入区域（包括第一页）
+
+                const isFirst = index === 0;
+
+                const insertText = isFirst ? '在开头插入新页' : '在此处插入新页';
+
+                const isDisabled = !canAdd;
+
+                
+
+                html += `
+
+                <div class="group/insert relative h-6 flex items-center justify-center ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'} my-3" 
+
+                     onclick="${isDisabled ? 'handleInsertDisabled()' : `modalInsertPageBefore(${index})`}">
+
+                    <!-- 细线 -->
+
+                    <div class="absolute inset-0 flex items-center">
+
+                        <div class="w-full border-t border-dashed ${isDisabled ? 'border-gray-200' : 'border-gray-200 group-hover/insert:border-primary-300'} transition-colors"></div>
+
+                    </div>
+
+                    <!-- 中心圆点和文字 -->
+
+                    <div class="relative bg-white px-3 flex items-center gap-2 ${isDisabled ? '' : 'group-hover/insert:bg-primary-50'} rounded-full transition-all">
+
+                        <div class="w-1.5 h-1.5 rounded-full ${isDisabled ? 'bg-gray-300' : 'bg-gray-300 group-hover/insert:hidden'}"></div>
+
+                        <div class="hidden ${isDisabled ? 'group-hover/insert:flex' : 'group-hover/insert:flex'} items-center gap-1.5 ${isDisabled ? 'text-gray-400' : 'text-primary-600'} text-xs font-medium">
+
+                            <i data-lucide="${isDisabled ? 'alert-circle' : 'plus-circle'}" class="w-4 h-4"></i>
+
+                            <span>${isDisabled ? '已达最大页数(20页)' : insertText}</span>
+
+                        </div>
+
+                    </div>
+
+                </div>`;
+
+                
+
+                // 页面卡片（添加高亮标识）
+
+                const isHighlight = index === highlightIndex;
+
+                html += `
+
+                <div id="page-${index}" class="group relative bg-white border border-gray-200 rounded-xl p-5 mb-4 hover:border-primary-200 hover:shadow-md transition-all ${isHighlight ? 'page-highlight' : ''}">
+
+                    ${canDelete ? `
+
+                    <button onclick="event.stopPropagation(); modalDeletePage(${index})" 
+
+                            class="absolute top-3 right-3 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center z-10">
+
+                        <i data-lucide="x" class="w-4 h-4"></i>
+
+                    </button>
+
+                    ` : ''}
+
+                    
+
+                    <span class="inline-block px-4 py-1.5 bg-gradient-to-r from-primary-500 to-purple-600 text-white text-sm font-semibold rounded-full mb-3">
+
+                        第 ${page.page_number} 页
+
+                    </span>
+
+                    
+
+                    <div class="mb-3">
+
+                        <label class="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
+
+                            <i data-lucide="map" class="w-3.5 h-3.5"></i>
+
+                            <span>场景</span>
+
+                        </label>
+
+                        <select onchange="modalUpdateScene(${index}, this.value)" 
+
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all hover:border-gray-300 cursor-pointer">
+
+                            <option value="">请选择场景</option>
+
+                            ${settingNames.map(name => 
+
+                                `<option value="${name}" ${page.scene === name ? 'selected' : ''}>${name}</option>`
+
+                            ).join('')}
+
+                        </select>
+
+                    </div>
+
+
+
+                    <div>
+
+                        <label class="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
+
+                            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+
+                            <span>情节内容</span>
+
+                        </label>
+
+                        <textarea onblur="modalUpdatePlot(${index}, this.value)" 
+
+                                  class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 leading-relaxed resize-y min-h-[70px] focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all hover:border-gray-300">${page.plot_summary}</textarea>
+
+                    </div>
+
+                </div>`;
+
+            });
+
+            
+
+            // 在最后一页之后添加插入区域（和上面样式一致）
+            const endBtnDisabled = !canAdd;
+
+            html += `
+
+            <div class="group/insert relative h-6 flex items-center justify-center ${endBtnDisabled ? 'cursor-not-allowed' : 'cursor-pointer'} my-3" 
+                 onclick="${endBtnDisabled ? 'handleInsertDisabled()' : `modalInsertPageAfter(${pageCount - 1})`}">
+                <!-- 细线 -->
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-dashed ${endBtnDisabled ? 'border-gray-200' : 'border-gray-200 group-hover/insert:border-primary-300'} transition-colors"></div>
+                </div>
+                <!-- 中心圆点和文字 -->
+                <div class="relative bg-white px-3 flex items-center gap-2 ${endBtnDisabled ? '' : 'group-hover/insert:bg-primary-50'} rounded-full transition-all">
+                    <div class="w-1.5 h-1.5 rounded-full ${endBtnDisabled ? 'bg-gray-300' : 'bg-gray-300 group-hover/insert:hidden'}"></div>
+                    <div class="hidden ${endBtnDisabled ? 'group-hover/insert:flex' : 'group-hover/insert:flex'} items-center gap-1.5 ${endBtnDisabled ? 'text-gray-400' : 'text-primary-600'} text-xs font-medium">
+                        <i data-lucide="${endBtnDisabled ? 'alert-circle' : 'plus-circle'}" class="w-4 h-4"></i>
+                    <span>${endBtnDisabled ? '已达最大页数(20页)' : '在末尾添加新页'}</span>
+
+                    </div>
+                </div>
+            </div>`;
+
+            
+
+            container.innerHTML = html;
+
+            lucide.createIcons();
+
+            
+
+            // 如果有高亮页面，滚动到该位置并设置3秒后移除高亮
+
+            if (highlightIndex >= 0) {
+
+                setTimeout(() => {
+
+                    const highlightElement = document.getElementById(`page-${highlightIndex}`);
+
+                    if (highlightElement) {
+
+                        highlightElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        
+
+                        // 3秒后移除高亮
+
+                        setTimeout(() => {
+
+                            highlightElement.classList.remove('page-highlight');
+
+                            highlightElement.classList.add('page-highlight-remove');
+
+                            
+
+                            // 再过0.5秒移除过渡类
+
+                            setTimeout(() => {
+
+                                highlightElement.classList.remove('page-highlight-remove');
+
+                            }, 500);
+
+                        }, 3000);
+
+                    }
+
+                }, 100);
+
+            }
+
+        }
+
+
+
+        // 编辑卡片字段
+
+        function modalEditCardField(element, type, index, field) {
+
+            element.contentEditable = 'true';
+
+            element.classList.add('border-primary-400', 'ring-2', 'ring-primary-100', 'bg-white');
+
+            element.focus();
+
+
+
+            element.onblur = function() {
+
+                this.contentEditable = 'false';
+
+                this.classList.remove('border-primary-400', 'ring-2', 'ring-primary-100', 'bg-white');
+
+                const value = this.textContent.trim();
+
+                if (value) {
+
+                    modalStoryData.core_elements[type][index][field] = value;
+
+                    if (type === 'settings' && field === 'name') {
+
+                        modalRenderOutline();
+
+                    }
+
+                } else {
+
+                    this.textContent = modalStoryData.core_elements[type][index][field];
+
+                }
+
+            };
+
+        }
+
+
+
+        // 添加角色
+
+        function modalAddCharacter() {
+
+            modalStoryData.core_elements.characters.push({
+
+                name: '新角色',
+
+                description: '请输入角色描述...'
+
+            });
+
+            modalRenderCharacters();
+
+            showToast('已添加新角色');
+
+        }
+
+
+
+        // 删除角色
+
+        async function modalDeleteCharacter(index) {
+
+            const char = modalStoryData.core_elements.characters[index];
+
+            const confirmed = await showConfirm(
+
+                `确定要删除角色"${char.name}"吗？`,
+
+                '删除角色'
+
+            );
+
+            if (confirmed) {
+
+                modalStoryData.core_elements.characters.splice(index, 1);
+
+                modalRenderCharacters();
+
+                showToast('已删除角色');
+
+            }
+
+        }
+
+
+
+        // 添加场景
+
+        function modalAddSetting() {
+
+            modalStoryData.core_elements.settings.push({
+
+                name: '新场景',
+
+                description: '请输入场景描述...'
+
+            });
+
+            modalRenderSettings();
+
+            showToast('已添加新场景');
+
+        }
+
+
+
+        // 删除场景
+
+        async function modalDeleteSetting(index) {
+
+            const setting = modalStoryData.core_elements.settings[index];
+
+            const sceneName = setting.name;
+
+            
+
+            const usedInPages = modalStoryData.outline.filter(page => page.scene === sceneName);
+
+            
+
+            let confirmed;
+
+            if (usedInPages.length > 0) {
+
+                confirmed = await showConfirm(
+
+                    `场景"${sceneName}"正在被 ${usedInPages.length} 个页面使用，删除后这些页面的场景将被清空。确定要删除吗？`,
+
+                    '删除场景'
+
+                );
+
+                if (!confirmed) return;
+
+                
+
+                modalStoryData.outline.forEach(page => {
+
+                    if (page.scene === sceneName) page.scene = '';
+
+                });
+
+            } else {
+
+                confirmed = await showConfirm(
+
+                    `确定要删除场景"${sceneName}"吗？`,
+
+                    '删除场景'
+
+                );
+
+                if (!confirmed) return;
+
+            }
+
+            
+
+            modalStoryData.core_elements.settings.splice(index, 1);
+
+            modalRenderSettings();
+
+            showToast('已删除场景');
+
+        }
+
+
+
+        // 更新场景
+
+        function modalUpdateScene(index, scene) {
+
+            modalStoryData.outline[index].scene = scene;
+
+        }
+
+
+
+        // 更新情节
+
+        function modalUpdatePlot(index, plot) {
+
+            modalStoryData.outline[index].plot_summary = plot.trim();
+
+        }
+
+
+
+        // 处理插入禁用状态
+
+        function handleInsertDisabled() {
+
+            showToast('最多只能添加20页！', 'error');
+
+        }
+
+
+
+        // 在指定位置之前插入新页
+
+        function modalInsertPageBefore(index) {
+
+            const pageCount = modalStoryData.outline.length;
+
+            
+
+            if (pageCount >= 20) {
+
+                showToast('最多只能添加20页！', 'error');
+
+                return;
+
+            }
+
+            
+
+            const newPage = {
+
+                page_number: index + 1,
+
+                scene: '',
+
+                plot_summary: '请输入情节内容...'
+
+            };
+
+            
+
+            modalStoryData.outline.splice(index, 0, newPage);
+
+            
+
+            // 重新编号
+
+            modalStoryData.outline.forEach((page, idx) => {
+
+                page.page_number = idx + 1;
+
+            });
+
+            
+
+            // 渲染并高亮新插入的页面
+
+            modalRenderOutline(index);
+
+            modalUpdatePageCount();
+
+            showToast('已插入新页');
+
+        }
+
+
+
+        // 在指定位置之后插入新页（末尾添加）
+
+        function modalInsertPageAfter(index) {
+
+            const pageCount = modalStoryData.outline.length;
+
+            
+
+            if (pageCount >= 20) {
+
+                showToast('最多只能添加20页！', 'error');
+
+                return;
+
+            }
+
+            
+
+            const newPage = {
+
+                page_number: index + 2,
+
+                scene: '',
+
+                plot_summary: '请输入情节内容...'
+
+            };
+
+            
+
+            modalStoryData.outline.splice(index + 1, 0, newPage);
+
+            
+
+            // 重新编号
+
+            modalStoryData.outline.forEach((page, idx) => {
+
+                page.page_number = idx + 1;
+
+            });
+
+            
+
+            // 渲染并高亮新插入的页面
+
+            modalRenderOutline(index + 1);
+
+            modalUpdatePageCount();
+
+            showToast('已添加新页');
+
+        }
+
+
+
+        // 删除页
+
+        async function modalDeletePage(index) {
+
+            const pageCount = modalStoryData.outline.length;
+
+            
+
+            if (pageCount <= 6) {
+
+                await showAlert('至少需要保留6页！');
+
+                return;
+
+            }
+
+            
+
+            const confirmed = await showConfirm(
+
+                `确定要删除第 ${modalStoryData.outline[index].page_number} 页吗？`,
+
+                '删除页面'
+
+            );
+
+            
+
+            if (confirmed) {
+
+                modalStoryData.outline.splice(index, 1);
+
+                
+
+                // 重新编号
+
+                modalStoryData.outline.forEach((page, idx) => {
+
+                    page.page_number = idx + 1;
+
+                });
+
+                
+
+                modalRenderOutline();
+
+                modalUpdatePageCount();
+
+                showToast('已删除页面');
+
+            }
+
+        }
+
+
+
+        // 保存草稿
+
+        function saveOutlineDraft() {
+
+            if (!modalStoryData.core_elements.title.trim()) {
+
+                showToast('请输入故事标题！', 'error');
+
+                return;
+
+            }
+
+            
+
+            // 保存数据到服务器/数据库
+
+            console.log('保存草稿数据：', JSON.stringify(modalStoryData, null, 2));
+
+            
+
+            // 关闭弹窗
+
+            document.getElementById('outlineModal').classList.add('hidden');
+
+            document.body.style.overflow = ''; // 恢复背景滚动
+
+            
+
+            // 显示成功提示
+
+            showToast('✅ 草稿已保存到我的绘本');
+
+            
+
+            // 实际项目中应该跳转到"我的绘本"页面
+
+            // setTimeout(() => {
+
+            //     window.location.href = 'my-books.html';
+
+            // }, 1000);
+
+        }
+
+
+
+        // 生成绘本
+
+        function generateStorybookFromModal() {
+
+            if (!modalStoryData.core_elements.title.trim()) {
+
+                showToast('请输入故事标题！', 'error');
+
+                return;
+
+            }
+
+            if (modalStoryData.core_elements.characters.length === 0) {
+
+                showToast('至少需要一个角色！', 'error');
+
+                return;
+
+            }
+
+            if (modalStoryData.core_elements.settings.length === 0) {
+
+                showToast('至少需要一个场景！', 'error');
+
+                return;
+
+            }
+
+
+
+            for (let i = 0; i < modalStoryData.outline.length; i++) {
+
+                const page = modalStoryData.outline[i];
+
+                if (!page.scene) {
+
+                    showToast(`第 ${page.page_number} 页未选择场景！`, 'error');
+
+                    return;
+
+                }
+
+                if (!page.plot_summary.trim()) {
+
+                    showToast(`第 ${page.page_number} 页未填写情节内容！`, 'error');
+
+                    return;
+
+                }
+
+            }
+
+
+
+            console.log('生成绘本，数据：', JSON.stringify(modalStoryData, null, 2));
+
+            showToast('正在生成绘本...');
+
+            setTimeout(async () => {
+
+                document.getElementById('outlineModal').classList.add('hidden');
+
+                document.body.style.overflow = '';
+
+                await showAlert('即将跳转到生成绘本页面');
+
+            }, 1000);
+
+        }
+
+
+
+        // 显示提示消息
+
+        function showToast(message, type = 'success') {
+
+            const toast = document.getElementById('toast');
+
+            toast.textContent = message;
+
+            
+
+            // 重置类名并显示
+
+            toast.className = `fixed top-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-2xl z-[100] transition-opacity ${
+
+                type === 'error' ? 'bg-red-500' : 'bg-gray-900'
+
+            } text-white opacity-100`;
+
+            
+
+            // 移除 pointer-events-none 以确保可见
+
+            toast.classList.remove('pointer-events-none');
+
+            
+
+            // 3秒后自动隐藏
+
+            setTimeout(() => {
+
+                toast.classList.remove('opacity-100');
+
+                toast.classList.add('opacity-0');
+
+                
+
+                // 完全隐藏后添加 pointer-events-none
+
+                setTimeout(() => {
+
+                    toast.classList.add('pointer-events-none');
+
+                }, 300);
+
+            }, 3000);
+
+        }
+
+
+
+        // ESC键关闭弹窗
+
+        document.addEventListener('keydown', function(e) {
+
+            if (e.key === 'Escape') {
+
+                const modal = document.getElementById('outlineModal');
+
+                if (!modal.classList.contains('hidden')) {
+
+                    closeOutlineModal();
+
+                }
+
+            }
+
+        });
+
+    </script>
+
+<!-- Code injected by live-server -->
+
+<script>
+
+	// <![CDATA[  <-- For SVG support
+
+	if ('WebSocket' in window) {
+
+		(function () {
+
+			function refreshCSS() {
+
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+
+				var head = document.getElementsByTagName("head")[0];
+
+				for (var i = 0; i < sheets.length; ++i) {
+
+					var elem = sheets[i];
+
+					var parent = elem.parentElement || head;
+
+					parent.removeChild(elem);
+
+					var rel = elem.rel;
+
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+
+					}
+
+					parent.appendChild(elem);
+
+				}
+
+			}
+
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+
+			var socket = new WebSocket(address);
+
+			socket.onmessage = function (msg) {
+
+				if (msg.data == 'reload') window.location.reload();
+
+				else if (msg.data == 'refreshcss') refreshCSS();
+
+			};
+
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+
+				console.log('Live reload enabled.');
+
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+
+			}
+
+		})();
+
+	}
+
+	else {
+
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+
+	}
+
+	// ]]>
+
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,200 @@
+/* 大纲确认模态窗口组件样式 */
+
+/* 滚动条样式 */
+.outline-modal-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.outline-modal-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.outline-modal-scrollbar::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.outline-modal-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.outline-modal-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* 可编辑元素的焦点样式 */
+[contenteditable="true"] {
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+    background-color: white !important;
+}
+
+/* 模态窗口动画 */
+.outline-modal-enter {
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+.outline-modal-enter-active {
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.outline-modal-exit {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.outline-modal-exit-active {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.15s ease-in, transform 0.15s ease-in;
+}
+
+/* 卡片悬停效果增强 */
+.outline-card {
+    transition: all 0.2s ease;
+}
+
+.outline-card:hover {
+    transform: translateY(-1px);
+}
+
+/* 页面卡片特殊样式 */
+.outline-page-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.outline-page-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.outline-page-card:hover::before {
+    opacity: 1;
+}
+
+/* 添加按钮特殊效果 */
+.add-button {
+    position: relative;
+    overflow: hidden;
+}
+
+.add-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
+}
+
+.add-button:hover::before {
+    width: 100px;
+    height: 100px;
+}
+
+/* 删除按钮样式 */
+.delete-button {
+    backdrop-filter: blur(4px);
+    background: rgba(239, 68, 68, 0.9);
+}
+
+.delete-button:hover {
+    background: rgba(220, 38, 38, 0.95);
+    transform: scale(1.1);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .outline-modal-sidebar {
+        width: 100%;
+        max-width: 350px;
+    }
+    
+    .outline-modal-main {
+        display: none;
+    }
+    
+    .outline-modal-mobile .outline-modal-main {
+        display: block;
+        width: 100%;
+    }
+    
+    .outline-modal-mobile .outline-modal-sidebar {
+        display: none;
+    }
+}
+
+/* 加载状态 */
+.outline-loading {
+    position: relative;
+}
+
+.outline-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 空状态样式 */
+.outline-empty-state {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 2px dashed #cbd5e1;
+}
+
+/* 主题色变量 */
+:root {
+    --outline-primary: #3b82f6;
+    --outline-primary-hover: #2563eb;
+    --outline-secondary: #8b5cf6;
+    --outline-success: #10b981;
+    --outline-warning: #f59e0b;
+    --outline-error: #ef4444;
+}
+
+/* 新页面高亮动画 */
+@keyframes slideInAndPulse {
+    0% {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.page-highlight {
+    background-color: #dbeafe !important;
+    border-color: #60a5fa !important;
+    animation: slideInAndPulse 0.4s ease-out;
+    transition: background-color 0.5s ease, border-color 0.5s ease;
+}
+
+.page-highlight-remove {
+    background-color: white !important;
+    border-color: #e5e7eb !important;
+}

@@ -28,6 +28,9 @@
     <!-- 大纲确认模态窗口组件 -->
     <link rel="stylesheet" href="css/outline-modal.css">
     <script src="js/outline-modal.js"></script>
+    
+    <!-- 生成进度窗口组件 -->
+    <script src="js/generation-progress.js"></script>
 
     
 
@@ -371,7 +374,7 @@
 
                     </div>
 
-                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">丑小鸭的春天</h3>
+                    <h3 class="mt-3 text-base font-semibold text-gray-800 group-hover:text-primary-600 transition-colors">丑小鸭的春天</h3>
 
                 </div>
 
@@ -385,7 +388,7 @@
 
                     </div>
 
-                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">狼来了</h3>
+                    <h3 class="mt-3 text-base font-semibold text-gray-800 group-hover:text-primary-600 transition-colors">狼来了</h3>
 
                 </div>
 
@@ -399,7 +402,7 @@
 
                     </div>
 
-                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">青蛙王子</h3>
+                    <h3 class="mt-3 text-base font-semibold text-gray-800 group-hover:text-primary-600 transition-colors">青蛙王子</h3>
 
                 </div>
 
@@ -413,7 +416,7 @@
 
                     </div>
 
-                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">亡羊补牢</h3>
+                    <h3 class="mt-3 text-base font-semibold text-gray-800 group-hover:text-primary-600 transition-colors">亡羊补牢</h3>
 
                 </div>
 
@@ -427,7 +430,7 @@
 
                     </div>
 
-                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">守株待兔</h3>
+                    <h3 class="mt-3 text-base font-semibold text-gray-800 group-hover:text-primary-600 transition-colors">守株待兔</h3>
 
                 </div>
 
@@ -441,7 +444,7 @@
 
                     </div>
 
-                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">灰姑娘</h3>
+                    <h3 class="mt-3 text-base font-semibold text-gray-800 group-hover:text-primary-600 transition-colors">灰姑娘</h3>
 
                 </div>
 
@@ -455,7 +458,7 @@
 
                     </div>
 
-                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">卖火柴的小女孩</h3>
+                    <h3 class="mt-3 text-base font-semibold text-gray-800 group-hover:text-primary-600 transition-colors">卖火柴的小女孩</h3>
 
                 </div>
 
@@ -469,7 +472,7 @@
 
                     </div>
 
-                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">海的女儿</h3>
+                    <h3 class="mt-3 text-base font-semibold text-gray-800 group-hover:text-primary-600 transition-colors">海的女儿</h3>
 
                 </div>
 
@@ -483,7 +486,7 @@
 
                     </div>
 
-                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">狐假虎威</h3>
+                    <h3 class="mt-3 text-base font-semibold text-gray-800 group-hover:text-primary-600 transition-colors">狐假虎威</h3>
 
                 </div>
 
@@ -497,7 +500,7 @@
 
                     </div>
 
-                    <h3 class="mt-3 text-base font-medium text-gray-800 group-hover:text-primary-600 transition-colors">龟兔赛跑</h3>
+                    <h3 class="mt-3 text-base font-semibold text-gray-800 group-hover:text-primary-600 transition-colors">龟兔赛跑</h3>
 
                 </div>
 
@@ -519,118 +522,6 @@
     
 
     <!-- 生成状态弹窗 -->
-
-    <div id="progressModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[200] hidden">
-
-        <div class="bg-white rounded-2xl p-8 max-w-3xl w-full mx-4 shadow-2xl">
-
-            <div class="text-center">
-
-
-                <!-- 主标题 -->
-                <h2 class="text-2xl font-bold text-gray-800 text-center mb-8">AI 正在生成您的绘本</h2>
-
-                
-
-                <!-- 四阶段状态区 -->
-                <div class="space-y-4 mb-8">
-                    <!-- 步骤1 -->
-                    <div class="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 transition-all duration-300" id="step1">
-                        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                            <i id="step1-icon" data-lucide="clock" class="w-5 h-5 text-gray-500"></i>
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-medium text-gray-700 mb-1">分析故事大纲</div>
-                            <p id="step1-detail" class="text-sm text-gray-500">准备解析故事结构和角色关系...</p>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span id="step1-status" class="text-sm font-medium text-gray-500 px-3 py-1 bg-gray-200 rounded-full">等待中</span>
-                        </div>
-                    </div>
-
-                    <!-- 步骤2 -->
-                    <div class="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 transition-all duration-300" id="step2">
-                        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                            <i id="step2-icon" data-lucide="clock" class="w-5 h-5 text-gray-500"></i>
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-medium text-gray-700 mb-1">生成故事脚本</div>
-                            <p id="step2-detail" class="text-sm text-gray-500">等待编写详细的故事内容...</p>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span id="step2-status" class="text-sm font-medium text-gray-500 px-3 py-1 bg-gray-200 rounded-full">等待中</span>
-                        </div>
-                    </div>
-
-                    <!-- 步骤3 -->
-                    <div class="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 transition-all duration-300" id="step3">
-                        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                            <i id="step3-icon" data-lucide="clock" class="w-5 h-5 text-gray-500"></i>
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-medium text-gray-700 mb-1">设计页面布局</div>
-                            <p id="step3-detail" class="text-sm text-gray-500">等待页面布局设计...</p>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span id="step3-status" class="text-sm font-medium text-gray-500 px-3 py-1 bg-gray-200 rounded-full">等待中</span>
-                        </div>
-                    </div>
-
-                    <!-- 步骤4 -->
-                    <div class="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 transition-all duration-300" id="step4">
-                        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                            <i id="step4-icon" data-lucide="clock" class="w-5 h-5 text-gray-500"></i>
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-medium text-gray-700 mb-1">生成插图</div>
-                            <p id="step4-detail" class="text-sm text-gray-500">等待AI绘制精美插图...</p>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span id="step4-status" class="text-sm font-medium text-gray-500 px-3 py-1 bg-gray-200 rounded-full">等待中</span>
-                        </div>
-                    </div>
-
-                </div>
-
-                
-
-                
-
-                <!-- 提示信息 -->
-
-                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-amber-600">💡</span>
-                        <span class="text-sm text-amber-700">您可以关闭窗口，生成会在后台继续</span>
-                    </div>
-                </div>
-
-                
-
-                <!-- 按钮 -->
-
-                <div class="flex space-x-3">
-
-                    <button onclick="closeProgressModal()" class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium">
-
-                        在后台继续
-
-                    </button>
-
-                    <button onclick="cancelGeneration()" class="flex-1 px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all duration-200 font-medium">
-
-                        取消生成
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
 
 
     <!-- Confirm 确认对话框 -->
@@ -1508,167 +1399,49 @@
 
 	}
 
-        // 进度弹窗管理
-        let generationState = {
-            isGenerating: false,
-            currentStep: 0,
-            totalImages: 0,
-            completedImages: 0
-        };
+        // 初始化生成进度组件
+        const generationProgress = new GenerationProgress();
+        
+        // 设置取消回调
+        generationProgress.onCancel((bookId) => {
+            showToast('已取消生成', 'error');
+        });
 
-        // 显示进度弹窗
-        function showProgressModal() {
-            document.getElementById('progressModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-            generationState.isGenerating = true;
-            generationState.currentStep = 1;
-            updateProgressDisplay();
-        }
-
-        // 关闭进度弹窗
-        function closeProgressModal() {
-            document.getElementById('progressModal').classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-
-        // 取消生成
-        function cancelGeneration() {
-            if (confirm('确定要取消生成吗？')) {
-                generationState.isGenerating = false;
-                closeProgressModal();
-                showToast('已取消生成', 'error');
-            }
-        }
-
-        // 更新步骤状态
-        function updateStep(stepNumber, status) {
-            const stepElement = document.getElementById(`step${stepNumber}`);
-            const iconContainer = stepElement.querySelector('.flex-shrink-0');
-            const iconElement = document.getElementById(`step${stepNumber}-icon`);
-            const titleElement = stepElement.querySelector('.font-medium');
-            const descElement = document.getElementById(`step${stepNumber}-detail`);
-            const statusElement = document.getElementById(`step${stepNumber}-status`);
-
-            // 步骤描述文本
-            const stepDescriptions = {
-                1: {
-                    pending: '准备解析故事结构和角色关系...',
-                    active: '正在深度分析故事结构和角色关系...',
-                    completed: '✓ 已解析故事结构和角色关系'
-                },
-                2: {
-                    pending: '等待编写详细的故事内容...',
-                    active: '正在编写详细的故事内容...',
-                    completed: '✓ 已编写完整的故事脚本'
-                },
-                3: {
-                    pending: '等待页面布局设计...',
-                    active: '正在设计页面布局...',
-                    completed: '✓ 已完成页面布局设计'
-                },
-                4: {
-                    pending: '等待AI绘制精美插图...',
-                    active: '正在生成精美插图...',
-                    completed: '✓ 已生成所有插图'
-                }
-            };
-
-            // 图标映射
-            const stepIcons = {
-                1: 'search',
-                2: 'file-text', 
-                3: 'layout',
-                4: 'image'
-            };
-
-            // 更新容器样式和图标 - 与大纲生成弹窗保持一致
-            if (status === 'pending') {
-                stepElement.className = 'flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 transition-all duration-300';
-                iconContainer.className = 'flex-shrink-0 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center';
-                iconElement.outerHTML = '<i id="step' + stepNumber + '-icon" data-lucide="clock" class="w-5 h-5 text-gray-500"></i>';
-                statusElement.textContent = '等待中';
-                statusElement.className = 'text-sm font-medium text-gray-500 px-3 py-1 bg-gray-200 rounded-full';
-                titleElement.className = 'font-medium text-gray-700 mb-1';
-                descElement.className = 'text-sm text-gray-500';
-                descElement.textContent = stepDescriptions[stepNumber].pending;
-            } else if (status === 'active') {
-                stepElement.className = 'flex items-center gap-4 p-4 rounded-xl bg-blue-50 border border-blue-300 transition-all duration-300';
-                iconContainer.className = 'flex-shrink-0 w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center';
-                iconElement.outerHTML = '<i id="step' + stepNumber + '-icon" data-lucide="loader-2" class="w-5 h-5 text-white animate-spin"></i>';
-                statusElement.textContent = '进行中';
-                statusElement.className = 'text-sm font-medium text-blue-600 px-3 py-1 bg-blue-200 rounded-full';
-                titleElement.className = 'font-medium text-blue-800 mb-1';
-                descElement.className = 'text-sm text-blue-600';
-                descElement.textContent = stepDescriptions[stepNumber].active;
-            } else if (status === 'completed') {
-                stepElement.className = 'flex items-center gap-4 p-4 rounded-xl bg-green-50 border border-green-300 transition-all duration-300';
-                iconContainer.className = 'flex-shrink-0 w-10 h-10 rounded-full bg-green-500 flex items-center justify-center';
-                iconElement.outerHTML = '<i id="step' + stepNumber + '-icon" data-lucide="check-circle" class="w-5 h-5 text-white"></i>';
-                statusElement.textContent = '已完成';
-                statusElement.className = 'text-sm font-medium text-green-600 px-3 py-1 bg-green-200 rounded-full';
-                titleElement.className = 'font-medium text-green-800 mb-1';
-                descElement.className = 'text-sm text-green-600';
-                descElement.textContent = stepDescriptions[stepNumber].completed;
-            }
-
-            // 重新初始化Lucide图标
-            lucide.createIcons();
-        }
-
-
-        // 更新整体进度显示
-        function updateProgressDisplay() {
-            // 重置所有步骤为pending状态
-            for (let i = 1; i <= 4; i++) {
-                updateStep(i, 'pending');
-            }
-
-            // 设置当前步骤为active
-            if (generationState.currentStep <= 4) {
-                updateStep(generationState.currentStep, 'active');
-            }
-
-            // 设置已完成的步骤
-            for (let i = 1; i < generationState.currentStep; i++) {
-                updateStep(i, 'completed');
-            }
-
-            // 更新状态文字 - 现在通过步骤状态显示，不需要额外的状态文字
-        }
-
-        // 模拟生成过程
+        // 模拟生成过程（使用新组件）
         function simulateGeneration() {
-            showProgressModal();
-
+            const bookId = 'index-story-' + Date.now();
+            
+            // 显示进度窗口
+            generationProgress.show(bookId, 1);
+            
             // 第1步：分析故事大纲 (3秒)
             setTimeout(() => {
-                generationState.currentStep = 2;
-                updateProgressDisplay();
+                if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
+                generationProgress.setCurrentStep(2);
 
                 // 第2步：生成故事脚本 (5秒)
                 setTimeout(() => {
-                    generationState.currentStep = 3;
-                    updateProgressDisplay();
+                    if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
+                    generationProgress.setCurrentStep(3);
 
-                    // 第3步：优化图片描述 (3秒)
+                    // 第3步：设计页面布局 (3秒)
                     setTimeout(() => {
-                        generationState.currentStep = 4;
-                        updateProgressDisplay();
+                        if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
+                        generationProgress.setCurrentStep(4);
 
-                        // 第4步：生成插图 (模拟生成过程)
+                        // 第4步：生成插图 (4秒)
                         setTimeout(() => {
-                            updateStep(4, 'completed');
+                            if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
+                            
                             // 生成完成
-                            setTimeout(() => {
-                                closeProgressModal();
+                            generationProgress.complete(() => {
                                 showToast('绘本生成完成！');
                                 // 自动打开绘本查看窗口
                                 setTimeout(() => {
                                     window.storybookReader.open(window.defaultStorybookData);
                                 }, 500);
-                            }, 2000);
+                            });
                         }, 4000);
-
                     }, 3000);
                 }, 5000);
             }, 3000);

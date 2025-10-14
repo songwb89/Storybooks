@@ -31,6 +31,32 @@
     background-color: white !important;
 }
 
+/* 占位符样式 */
+.placeholder-text {
+    color: #9ca3af;
+    font-style: normal;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* 新添加卡片的高亮动画 */
+@keyframes highlightPulse {
+    0%, 100% { 
+        background-color: white;
+        transform: scale(1);
+    }
+    50% { 
+        background-color: #dbeafe;
+        transform: scale(1.02);
+    }
+}
+
+.highlight-new {
+    animation: highlightPulse 1.5s ease-in-out;
+    border: 2px solid #3b82f6 !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+}
+
 /* 模态窗口动画 */
 .outline-modal-enter {
     opacity: 0;
@@ -197,4 +223,20 @@
 .page-highlight-remove {
     background-color: white !important;
     border-color: #e5e7eb !important;
+}
+
+/* 大纲预览样式 */
+.outline-preview-page-card {
+    position: relative;
+    padding-left: 16px;
+}
+
+.outline-preview-page-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
 }

@@ -34,7 +34,7 @@ class OutlineModal {
                         <span class="font-medium">取消</span>
                     </button>
                     
-                    <h2 class="text-xl font-bold text-gray-800">确认故事大纲</h2>
+                    <h2 class="text-2xl font-bold text-gray-800">确认故事大纲</h2>
                     
                     <div class="flex items-center gap-3">
                         <button onclick="outlineModal.saveDraft()" class="flex items-center gap-2 px-5 py-2 border-2 border-primary-500 text-primary-600 bg-white rounded-lg font-medium hover:bg-primary-50 transition-all">
@@ -52,24 +52,19 @@ class OutlineModal {
                 <div class="flex h-[calc(100vh-73px)] overflow-hidden">
                     <!-- 左侧侧边栏 -->
                     <aside class="w-[350px] bg-white border-r border-gray-200 overflow-y-auto p-5" style="scrollbar-width: thin;">
-                        <!-- 标题区 -->
-                        <div class="mb-5">
-                            <div id="modalStoryTitle" contenteditable="false" 
-                                 class="text-2xl font-bold text-gray-800 px-3 py-2 rounded-lg border-2 border-transparent hover:bg-gray-50 hover:border-gray-200 cursor-pointer transition-all outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-50 focus:bg-white">
-                                故事标题
-                            </div>
-                        </div>
-
-                        <!-- 核心主题区 -->
+                        <!-- 故事标题 -->
                         <div class="mb-5">
                             <div class="flex items-center gap-2 mb-2.5">
-                                <i data-lucide="lightbulb" class="w-4 h-4 text-amber-500"></i>
-                                <h3 class="text-sm font-semibold text-gray-700">核心主题</h3>
+                                <i data-lucide="file-text" class="w-4 h-4 text-purple-500"></i>
+                                <h3 class="text-sm font-semibold text-gray-700">故事标题</h3>
                             </div>
-                            <div id="modalThemeContent" contenteditable="false"
-                                 class="px-3 py-3 bg-primary-50 border-l-3 border-primary-400 rounded-lg text-sm text-gray-700 leading-relaxed cursor-pointer hover:bg-primary-100 transition-all outline-none focus:ring-2 focus:ring-primary-300 focus:bg-white min-h-[50px]">
-                                故事主题
-                            </div>
+                            <input 
+                                type="text" 
+                                id="modalStoryTitle" 
+                                class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                placeholder="请输入标题..."
+                                onchange="outlineModal.updateStoryTitle(this.value)"
+                            />
                         </div>
 
                         <!-- 主要角色区 -->
@@ -107,12 +102,13 @@ class OutlineModal {
 
                     <!-- 右侧内容区 -->
                     <main class="flex-1 overflow-y-auto px-8 py-6" style="scrollbar-width: thin;">
-                <!-- 大纲标题 -->
-                <div class="flex items-center justify-center gap-3 mb-6">
-                    <i data-lucide="file-text" class="w-6 h-6 text-primary-500"></i>
-                    <h2 class="text-2xl font-bold text-gray-800">故事大纲</h2>
-                </div>
-                        
+                        <!-- 故事大纲标题 -->
+                        <div class="max-w-4xl mx-auto mb-4">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="book-open" class="w-4 h-4 text-orange-500"></i>
+                                <h2 class="text-sm font-semibold text-gray-700">故事大纲</h2>
+                            </div>
+                        </div>
                         <div id="modalOutlineList" class="max-w-4xl mx-auto"></div>
                     </main>
                 </div>
@@ -133,36 +129,7 @@ class OutlineModal {
     }
     
     setupEditableElements() {
-        const title = document.getElementById('modalStoryTitle');
-        const theme = document.getElementById('modalThemeContent');
-
-        if (title) {
-            title.addEventListener('click', function() {
-                this.contentEditable = 'true';
-                this.focus();
-            });
-
-            title.addEventListener('blur', () => {
-                title.contentEditable = 'false';
-                if (this.storyData && this.storyData.core_elements) {
-                    this.storyData.core_elements.title = title.textContent.trim();
-                }
-            });
-        }
-
-        if (theme) {
-            theme.addEventListener('click', function() {
-                this.contentEditable = 'true';
-                this.focus();
-            });
-
-            theme.addEventListener('blur', () => {
-                theme.contentEditable = 'false';
-                if (this.storyData && this.storyData.core_elements) {
-                    this.storyData.core_elements.theme = theme.textContent.trim();
-                }
-            });
-        }
+        // 标题编辑功能已移除（现在标题只在顶部显示，不可编辑）
     }
     
     open(storyData) {
@@ -234,7 +201,6 @@ class OutlineModal {
         if (!this.storyData) return;
         
         this.renderTitle();
-        this.renderTheme();
         this.renderCharacters();
         this.renderSettings();
         this.renderOutline();
@@ -243,16 +209,18 @@ class OutlineModal {
     
     renderTitle() {
         const titleElement = document.getElementById('modalStoryTitle');
-        if (titleElement && this.storyData.core_elements) {
-            titleElement.textContent = this.storyData.core_elements.title || '故事标题';
+        
+        if (this.storyData.core_elements && titleElement) {
+            const title = this.storyData.core_elements.title || '';
+            titleElement.value = title;
         }
     }
     
-    renderTheme() {
-        const themeElement = document.getElementById('modalThemeContent');
-        if (themeElement && this.storyData.core_elements) {
-            themeElement.textContent = this.storyData.core_elements.theme || '故事主题';
-        }
+    updateStoryTitle(newTitle) {
+        if (!this.storyData.core_elements) return;
+        
+        this.storyData.core_elements.title = newTitle.trim();
+        this.markAsModified();
     }
     
     renderCharacters() {
@@ -267,15 +235,17 @@ class OutlineModal {
         }
 
         container.innerHTML = characters.map((char, index) => `
-            <div class="group relative bg-white border border-gray-200 rounded-xl p-3 mb-2.5 hover:border-primary-300 hover:shadow-sm transition-all">
+            <div class="group relative bg-white border border-gray-200 rounded-xl p-3 mb-2.5 hover:border-primary-300 hover:shadow-sm transition-all" data-character-index="${index}">
                 <button onclick="outlineModal.deleteCharacter(${index})" 
                         class="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
                 </button>
-                <div onclick="outlineModal.editCardField(this, 'characters', ${index}, 'name')" 
-                     class="text-sm font-semibold text-gray-800 mb-1.5 px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer">${char.name || ''}</div>
-                <div onclick="outlineModal.editCardField(this, 'characters', ${index}, 'description')" 
-                     class="text-xs text-gray-600 leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px]">${char.description || ''}</div>
+                <div onclick="outlineModal.editCardField(this, 'characters', ${index}, 'name', '请输入角色名')" 
+                     class="text-sm font-semibold mb-1.5 px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer ${char.name ? 'text-gray-800' : 'text-gray-400'}" 
+                     data-placeholder="请输入角色名">${char.name || '<span class="placeholder-text">请输入角色名</span>'}</div>
+                <div onclick="outlineModal.editCardField(this, 'characters', ${index}, 'description', '请输入角色描述')" 
+                     class="text-xs leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px] ${char.description ? 'text-gray-600' : 'text-gray-400'}" 
+                     data-placeholder="请输入角色描述">${char.description || '<span class="placeholder-text">请输入角色描述</span>'}</div>
             </div>
         `).join('');
         
@@ -296,15 +266,17 @@ class OutlineModal {
         }
 
         container.innerHTML = settings.map((setting, index) => `
-            <div class="group relative bg-white border border-gray-200 rounded-xl p-3 mb-2.5 hover:border-emerald-300 hover:shadow-sm transition-all">
+            <div class="group relative bg-white border border-gray-200 rounded-xl p-3 mb-2.5 hover:border-emerald-300 hover:shadow-sm transition-all" data-setting-index="${index}">
                 <button onclick="outlineModal.deleteSetting(${index})" 
                         class="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
                 </button>
-                <div onclick="outlineModal.editCardField(this, 'settings', ${index}, 'name')" 
-                     class="text-sm font-semibold text-gray-800 mb-1.5 px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer">${setting.name || ''}</div>
-                <div onclick="outlineModal.editCardField(this, 'settings', ${index}, 'description')" 
-                     class="text-xs text-gray-600 leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px]">${setting.description || ''}</div>
+                <div onclick="outlineModal.editCardField(this, 'settings', ${index}, 'name', '请输入场景名')" 
+                     class="text-sm font-semibold mb-1.5 px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer ${setting.name ? 'text-gray-800' : 'text-gray-400'}" 
+                     data-placeholder="请输入场景名">${setting.name || '<span class="placeholder-text">请输入场景名</span>'}</div>
+                <div onclick="outlineModal.editCardField(this, 'settings', ${index}, 'description', '请输入场景描述')" 
+                     class="text-xs leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px] ${setting.description ? 'text-gray-600' : 'text-gray-400'}" 
+                     data-placeholder="请输入场景描述">${setting.description || '<span class="placeholder-text">请输入场景描述</span>'}</div>
             </div>
         `).join('');
         
@@ -368,9 +340,12 @@ class OutlineModal {
                     <div class="w-10 h-10 bg-gradient-to-r from-primary-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                         ${page.page_number || index + 1}
                     </div>
-                    <div>
-                        <div onclick="outlineModal.editPageField(this, ${index}, 'scene')" 
-                             class="text-sm font-semibold text-primary-600 px-2 py-1 rounded border border-transparent hover:bg-primary-50 cursor-pointer">${page.scene || '场景'}</div>
+                    <div class="flex-1">
+                        <select onchange="outlineModal.updatePageScene(${index}, this.value)" 
+                                class="text-sm font-semibold px-2 py-1 rounded border border-gray-200 hover:border-primary-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 cursor-pointer bg-white outline-none transition-all ${page.scene ? 'text-primary-600' : 'text-gray-400'}">
+                            <option value="" disabled ${!page.scene ? 'selected' : ''} hidden>选择场景...</option>
+                            ${this.getSettingsOptions(page.scene)}
+                        </select>
                     </div>
                 </div>
                 
@@ -432,6 +407,27 @@ class OutlineModal {
         }
     }
     
+    // 获取场景选项HTML
+    getSettingsOptions(selectedScene) {
+        if (!this.storyData.core_elements.settings) {
+            return '';
+        }
+        
+        return this.storyData.core_elements.settings.map(setting => {
+            const isSelected = setting.name === selectedScene ? 'selected' : '';
+            return `<option value="${setting.name}" ${isSelected}>${setting.name}</option>`;
+        }).join('');
+    }
+    
+    // 更新页面场景
+    updatePageScene(index, sceneName) {
+        if (this.storyData.outline[index]) {
+            this.storyData.outline[index].scene = sceneName;
+            // 重新渲染大纲以更新样式
+            this.renderOutline();
+        }
+    }
+    
     // 添加角色
     addCharacter() {
         if (!this.storyData.core_elements.characters) {
@@ -439,11 +435,14 @@ class OutlineModal {
         }
         
         this.storyData.core_elements.characters.push({
-            name: '新角色',
-            description: '角色描述'
+            name: '',
+            description: ''
         });
         
         this.renderCharacters();
+        
+        // 滚动到新添加的角色并高亮
+        this.highlightNewCard('character', this.storyData.core_elements.characters.length - 1);
     }
     
     // 删除角色
@@ -461,11 +460,14 @@ class OutlineModal {
         }
         
         this.storyData.core_elements.settings.push({
-            name: '新场景',
-            description: '场景描述'
+            name: '',
+            description: ''
         });
         
         this.renderSettings();
+        
+        // 滚动到新添加的场景并高亮
+        this.highlightNewCard('setting', this.storyData.core_elements.settings.length - 1);
     }
     
     // 处理插入禁用状态
@@ -544,8 +546,24 @@ class OutlineModal {
     // 删除场景
     deleteSetting(index) {
         if (this.storyData.core_elements.settings) {
+            // 获取被删除的场景名称
+            const deletedSceneName = this.storyData.core_elements.settings[index].name;
+            
+            // 删除场景
             this.storyData.core_elements.settings.splice(index, 1);
+            
+            // 清空所有使用该场景的页面的场景关联
+            if (this.storyData.outline) {
+                this.storyData.outline.forEach(page => {
+                    if (page.scene === deletedSceneName) {
+                        page.scene = '';
+                    }
+                });
+            }
+            
+            // 重新渲染场景列表和大纲
             this.renderSettings();
+            this.renderOutline();
         }
     }
     
@@ -559,7 +577,23 @@ class OutlineModal {
     }
     
     // 编辑卡片字段
-    editCardField(element, type, index, field) {
+    editCardField(element, type, index, field, placeholder = '') {
+        // 如果当前显示的是占位符，清空内容
+        const currentValue = element.textContent.trim();
+        const hasPlaceholder = element.querySelector('.placeholder-text');
+        
+        if (hasPlaceholder || currentValue === placeholder) {
+            element.textContent = '';
+        }
+        
+        // 移除灰色样式，改为编辑时的黑色样式
+        element.classList.remove('text-gray-400', 'text-gray-600');
+        if (field === 'name') {
+            element.classList.add('text-gray-800');
+        } else {
+            element.classList.add('text-gray-600');
+        }
+        
         element.contentEditable = 'true';
         element.focus();
         
@@ -569,10 +603,20 @@ class OutlineModal {
             
             if (type === 'characters' && this.storyData.core_elements.characters[index]) {
                 this.storyData.core_elements.characters[index][field] = value;
+                this.renderCharacters();
             } else if (type === 'settings' && this.storyData.core_elements.settings[index]) {
                 this.storyData.core_elements.settings[index][field] = value;
+                this.renderSettings();
             }
         }, { once: true });
+        
+        // 按下ESC键取消编辑
+        const handleKeydown = (e) => {
+            if (e.key === 'Escape') {
+                element.blur();
+            }
+        };
+        element.addEventListener('keydown', handleKeydown, { once: true });
     }
     
     // 编辑页面字段
@@ -588,6 +632,33 @@ class OutlineModal {
                 this.storyData.outline[index][field] = value;
             }
         }, { once: true });
+    }
+    
+    // 高亮新添加的卡片并滚动到视野中
+    highlightNewCard(type, index) {
+        // 使用 requestAnimationFrame 确保 DOM 已经更新
+        requestAnimationFrame(() => {
+            const selector = type === 'character' 
+                ? `[data-character-index="${index}"]` 
+                : `[data-setting-index="${index}"]`;
+            const card = document.querySelector(selector);
+            
+            if (card) {
+                // 滚动到卡片位置（居中显示）
+                card.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+                
+                // 添加高亮动画
+                card.classList.add('highlight-new');
+                
+                // 2秒后移除高亮
+                setTimeout(() => {
+                    card.classList.remove('highlight-new');
+                }, 2000);
+            }
+        });
     }
     
     getDefaultStoryData() {

@@ -17,6 +17,9 @@
     <link rel="stylesheet" href="css/outline-modal.css">
     <script src="js/outline-modal.js"></script>
     
+    <!-- 生成进度窗口组件 -->
+    <script src="js/generation-progress.js"></script>
+    
     <script>
         tailwind.config = {
             theme: {
@@ -72,31 +75,7 @@
             animation: spin 1s linear infinite;
         }
 
-        /* 卡片悬停效果 */
-        .book-card {
-            transition: all 0.3s ease;
-        }
-
-        .book-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        /* 状态徽章样式 */
-        .status-badge {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            z-index: 10;
-        }
-
-        /* 占位图片样式 */
-        .placeholder-image {
-            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        /* 首页风格样式 - 图片和文字分离 */
     </style>
 </head>
 
@@ -129,41 +108,16 @@
     </div>
 
     <!-- 主容器 -->
-    <div class="max-w-6xl mx-auto px-6 py-4 relative">
+    <div class="max-w-[1400px] mx-auto px-6 py-4 relative">
         <!-- 页面标题 -->
-        <div class="text-center mt-4 mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">
+        <div class="mt-6 mb-6">
+            <h1 class="text-2xl font-semibold text-gray-800">
                 我的绘本
             </h1>
-            <p class="text-gray-500 text-sm">管理您创作的所有绘本作品</p>
-        </div>
-
-        <!-- 操作栏 -->
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex items-center gap-4">
-                <span class="text-sm text-gray-600">共 <span class="font-semibold text-gray-800" id="totalCount">6</span> 本绘本</span>
-                
-                <!-- 状态筛选 -->
-                <div class="flex items-center gap-2">
-                    <span class="text-sm text-gray-600">筛选：</span>
-                    <select id="statusFilter" onchange="filterByStatus()" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none">
-                        <option value="all">全部状态</option>
-                        <option value="draft">大纲确认</option>
-                        <option value="generating">生成中</option>
-                        <option value="completed">已完成</option>
-                        <option value="failed">生成失败</option>
-                    </select>
-                </div>
-            </div>
-
-            <button onclick="createNewBook()" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-                <span>创建新绘本</span>
-            </button>
         </div>
 
         <!-- 绘本网格 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="booksGrid">
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6" id="booksGrid">
             <!-- 绘本卡片将通过JavaScript动态生成 -->
         </div>
 
@@ -177,6 +131,11 @@
             <button onclick="createNewBook()" class="px-6 py-3 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all">
                 创建绘本
             </button>
+        </div>
+
+        <!-- 分页组件 -->
+        <div id="paginationContainer" class="flex justify-center items-center gap-2 mt-8 mb-4">
+            <!-- 分页按钮将通过JavaScript动态生成 -->
         </div>
     </div>
 
@@ -323,72 +282,266 @@
         // 初始化模态窗口
         initializeModals();
 
+        // 初始化生成进度窗口组件
+        const generationProgress = new GenerationProgress();
+        
+        // 设置取消回调
+        generationProgress.onCancel((bookId) => {
+            console.log('用户取消了生成，绘本 ID:', bookId);
+            if (bookId) {
+                const book = booksData.find(b => b.id === bookId);
+                if (book) {
+                    book.status = 'draft';
+                    book.progress = 0;
+                    renderBooks();
+                }
+            }
+        });
+
         // 模拟绘本数据
         const booksData = [
+            // 第1本 - 已完成
             {
                 id: 1,
-                title: "小兔子的冒险",
-                status: "completed", // draft, generating, completed, failed
+                title: "丑小鸭的春天",
+                status: "completed",
                 createdAt: "2024-01-15",
                 updatedAt: "2024-01-16",
-                coverImage: "images/1.png", // 只有completed状态才有图片
+                coverImage: "images/丑小鸭的春天.png",
                 pages: 12,
                 progress: 100
             },
+            // 第2本 - 异常状态：大纲确认
             {
-                id: 2,
-                title: "星空下的小猫",
+                id: 11,
+                title: "小兔子的冒险",
                 status: "draft",
-                createdAt: "2024-01-14",
-                updatedAt: "2024-01-14",
+                createdAt: "2024-01-05",
+                updatedAt: "2024-01-05",
                 coverImage: null,
                 pages: 8,
                 progress: 0
             },
+            // 第3本 - 异常状态：生成中
             {
-                id: 3,
+                id: 12,
                 title: "魔法森林的秘密",
                 status: "generating",
-                createdAt: "2024-01-13",
-                updatedAt: "2024-01-13",
+                createdAt: "2024-01-04",
+                updatedAt: "2024-01-04",
                 coverImage: null,
                 pages: 15,
-                progress: 0
+                progress: 45
             },
+            // 第4本 - 异常状态：生成失败
             {
-                id: 4,
-                title: "勇敢的小鸭子",
-                status: "completed",
-                createdAt: "2024-01-12",
-                updatedAt: "2024-01-12",
-                coverImage: "images/2.png",
-                pages: 10,
-                progress: 100
-            },
-            {
-                id: 5,
+                id: 13,
                 title: "彩虹桥的传说",
                 status: "failed",
-                createdAt: "2024-01-11",
-                updatedAt: "2024-01-11",
+                createdAt: "2024-01-03",
+                updatedAt: "2024-01-03",
                 coverImage: null,
                 pages: 0,
                 progress: 0,
                 errorMessage: "图片生成失败，请重试"
             },
+            // 第5-13本 - 已完成（剩余9本第一轮）
+            {
+                id: 2,
+                title: "亡羊补牢",
+                status: "completed",
+                createdAt: "2024-01-14",
+                updatedAt: "2024-01-14",
+                coverImage: "images/亡羊补牢.png",
+                pages: 8,
+                progress: 100
+            },
+            {
+                id: 3,
+                title: "卖火柴的小女孩",
+                status: "completed",
+                createdAt: "2024-01-13",
+                updatedAt: "2024-01-13",
+                coverImage: "images/卖火柴的小女孩.png",
+                pages: 10,
+                progress: 100
+            },
+            {
+                id: 4,
+                title: "守株待兔",
+                status: "completed",
+                createdAt: "2024-01-12",
+                updatedAt: "2024-01-12",
+                coverImage: "images/守株待兔.png",
+                pages: 6,
+                progress: 100
+            },
+            {
+                id: 5,
+                title: "海的女儿",
+                status: "completed",
+                createdAt: "2024-01-11",
+                updatedAt: "2024-01-11",
+                coverImage: "images/海的女儿.png",
+                pages: 15,
+                progress: 100
+            },
             {
                 id: 6,
-                title: "月亮上的兔子",
+                title: "灰姑娘",
                 status: "completed",
                 createdAt: "2024-01-10",
                 updatedAt: "2024-01-10",
-                coverImage: "images/3.png",
+                coverImage: "images/灰姑娘.png",
                 pages: 14,
+                progress: 100
+            },
+            {
+                id: 7,
+                title: "狐假虎威",
+                status: "completed",
+                createdAt: "2024-01-09",
+                updatedAt: "2024-01-09",
+                coverImage: "images/狐假虎威.png",
+                pages: 8,
+                progress: 100
+            },
+            {
+                id: 8,
+                title: "狼来了",
+                status: "completed",
+                createdAt: "2024-01-08",
+                updatedAt: "2024-01-08",
+                coverImage: "images/狼来了.png",
+                pages: 6,
+                progress: 100
+            },
+            {
+                id: 9,
+                title: "青蛙王子",
+                status: "completed",
+                createdAt: "2024-01-07",
+                updatedAt: "2024-01-07",
+                coverImage: "images/青蛙王子.png",
+                pages: 12,
+                progress: 100
+            },
+            {
+                id: 10,
+                title: "龟兔赛跑",
+                status: "completed",
+                createdAt: "2024-01-06",
+                updatedAt: "2024-01-06",
+                coverImage: "images/龟兔赛跑.png",
+                pages: 8,
+                progress: 100
+            },
+            // 第14-23本 - 已完成（第二轮重复10本）
+            {
+                id: 14,
+                title: "丑小鸭的春天",
+                status: "completed",
+                createdAt: "2024-01-15",
+                updatedAt: "2024-01-16",
+                coverImage: "images/丑小鸭的春天.png",
+                pages: 12,
+                progress: 100
+            },
+            {
+                id: 15,
+                title: "亡羊补牢",
+                status: "completed",
+                createdAt: "2024-01-14",
+                updatedAt: "2024-01-14",
+                coverImage: "images/亡羊补牢.png",
+                pages: 8,
+                progress: 100
+            },
+            {
+                id: 16,
+                title: "卖火柴的小女孩",
+                status: "completed",
+                createdAt: "2024-01-13",
+                updatedAt: "2024-01-13",
+                coverImage: "images/卖火柴的小女孩.png",
+                pages: 10,
+                progress: 100
+            },
+            {
+                id: 17,
+                title: "守株待兔",
+                status: "completed",
+                createdAt: "2024-01-12",
+                updatedAt: "2024-01-12",
+                coverImage: "images/守株待兔.png",
+                pages: 6,
+                progress: 100
+            },
+            {
+                id: 18,
+                title: "海的女儿",
+                status: "completed",
+                createdAt: "2024-01-11",
+                updatedAt: "2024-01-11",
+                coverImage: "images/海的女儿.png",
+                pages: 15,
+                progress: 100
+            },
+            {
+                id: 19,
+                title: "灰姑娘",
+                status: "completed",
+                createdAt: "2024-01-10",
+                updatedAt: "2024-01-10",
+                coverImage: "images/灰姑娘.png",
+                pages: 14,
+                progress: 100
+            },
+            {
+                id: 20,
+                title: "狐假虎威",
+                status: "completed",
+                createdAt: "2024-01-09",
+                updatedAt: "2024-01-09",
+                coverImage: "images/狐假虎威.png",
+                pages: 8,
+                progress: 100
+            },
+            {
+                id: 21,
+                title: "狼来了",
+                status: "completed",
+                createdAt: "2024-01-08",
+                updatedAt: "2024-01-08",
+                coverImage: "images/狼来了.png",
+                pages: 6,
+                progress: 100
+            },
+            {
+                id: 22,
+                title: "青蛙王子",
+                status: "completed",
+                createdAt: "2024-01-07",
+                updatedAt: "2024-01-07",
+                coverImage: "images/青蛙王子.png",
+                pages: 12,
+                progress: 100
+            },
+            {
+                id: 23,
+                title: "龟兔赛跑",
+                status: "completed",
+                createdAt: "2024-01-06",
+                updatedAt: "2024-01-06",
+                coverImage: "images/龟兔赛跑.png",
+                pages: 8,
                 progress: 100
             }
         ];
 
-        let currentFilter = 'all';
+        // 分页相关变量
+        let currentPage = 1;
+        const itemsPerPage = 20;
 
         // 页面加载时渲染绘本
         document.addEventListener('DOMContentLoaded', function() {
@@ -412,28 +565,101 @@
             const grid = document.getElementById('booksGrid');
             const emptyState = document.getElementById('emptyState');
             
-            // 根据筛选条件过滤数据
-            const filteredBooks = currentFilter === 'all' 
-                ? booksData 
-                : booksData.filter(book => book.status === currentFilter);
-
-            // 更新总数
-            document.getElementById('totalCount').textContent = filteredBooks.length;
-
-            if (filteredBooks.length === 0) {
+            if (booksData.length === 0) {
                 grid.classList.add('hidden');
                 emptyState.classList.remove('hidden');
+                document.getElementById('paginationContainer').classList.add('hidden');
                 return;
             }
 
             grid.classList.remove('hidden');
             emptyState.classList.add('hidden');
 
-            grid.innerHTML = filteredBooks.map(book => createBookCard(book)).join('');
+            // 计算分页
+            const totalPages = Math.ceil(booksData.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const currentBooks = booksData.slice(startIndex, endIndex);
+
+            // 渲染当前页的绘本
+            grid.innerHTML = currentBooks.map(book => createBookCard(book)).join('');
+            lucide.createIcons();
+
+            // 渲染分页组件
+            renderPagination(totalPages);
+        }
+
+        // 渲染分页组件
+        function renderPagination(totalPages) {
+            const container = document.getElementById('paginationContainer');
+            
+            if (totalPages <= 1) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            
+            let paginationHTML = '';
+
+            // 上一页按钮
+            paginationHTML += `
+                <button 
+                    onclick="changePage(${currentPage - 1})" 
+                    ${currentPage === 1 ? 'disabled' : ''}
+                    class="px-3 py-2 rounded-lg border ${currentPage === 1 ? 'border-gray-200 text-gray-300 cursor-not-allowed' : 'border-gray-300 text-gray-700 hover:bg-gray-50'} transition-all"
+                >
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+            `;
+
+            // 页码按钮
+            for (let i = 1; i <= totalPages; i++) {
+                // 显示逻辑：始终显示第1页、最后一页、当前页及其前后各1页
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    paginationHTML += `
+                        <button 
+                            onclick="changePage(${i})" 
+                            class="px-4 py-2 rounded-lg border transition-all ${i === currentPage 
+                                ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white border-primary-500' 
+                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'}"
+                        >
+                            ${i}
+                        </button>
+                    `;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    paginationHTML += `<span class="px-2 text-gray-400">...</span>`;
+                }
+            }
+
+            // 下一页按钮
+            paginationHTML += `
+                <button 
+                    onclick="changePage(${currentPage + 1})" 
+                    ${currentPage === totalPages ? 'disabled' : ''}
+                    class="px-3 py-2 rounded-lg border ${currentPage === totalPages ? 'border-gray-200 text-gray-300 cursor-not-allowed' : 'border-gray-300 text-gray-700 hover:bg-gray-50'} transition-all"
+                >
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+            `;
+
+            container.innerHTML = paginationHTML;
             lucide.createIcons();
         }
 
-        // 创建绘本卡片
+        // 切换页码
+        function changePage(page) {
+            const totalPages = Math.ceil(booksData.length / itemsPerPage);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPage = page;
+            renderBooks();
+            
+            // 滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 创建绘本卡片（首页风格）
         function createBookCard(book) {
             const statusConfig = getStatusConfig(book.status);
             
@@ -444,83 +670,70 @@
                     clickHandler = `onclick="readBookDirectly(${book.id})"`;
                     break;
                 case 'draft':
+                case 'failed':
                     clickHandler = `onclick="openOutlineConfirm(${book.id})"`;
+                    break;
+                case 'generating':
+                    clickHandler = `onclick="viewProgress(${book.id})"`;
                     break;
                 default:
                     clickHandler = `onclick="openBookDetail(${book.id})"`;
             }
             
             return `
-                <div class="book-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-200 relative cursor-pointer group hover:shadow-lg transition-all" ${clickHandler}>
-                    <!-- 状态徽章（已完成状态不显示） -->
-                    ${book.status !== 'completed' ? `
-                        <div class="status-badge">
-                            <span class="px-2 py-1 text-xs font-medium rounded-full ${statusConfig.badgeClass}">
-                                ${statusConfig.icon ? `<i data-lucide="${statusConfig.icon}" class="w-3 h-3 inline mr-1 ${statusConfig.iconClass || ''}"></i>` : ''}
-                                ${statusConfig.text}
-                            </span>
+                <div class="group cursor-pointer" ${clickHandler}>
+                    <!-- 图片容器 -->
+                    <div class="relative">
+                        <div class="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+                            ${book.coverImage 
+                                ? `<img src="${book.coverImage}" alt="${book.title}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">`
+                                : `<div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                                    <i data-lucide="${getPlaceholderIcon(book.status)}" class="w-16 h-16 text-gray-400"></i>
+                                   </div>`
+                            }
                         </div>
-                    ` : ''}
 
-                    <!-- 更多操作按钮（仅已完成状态显示） -->
-                    ${book.status === 'completed' ? `
+                        <!-- 状态徽章（叠加在图片上，已完成状态不显示） -->
+                        ${book.status !== 'completed' ? `
+                            <div class="absolute top-3 left-3 z-10">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full ${statusConfig.badgeClass} shadow-sm backdrop-blur-sm">
+                                    ${statusConfig.icon ? `<i data-lucide="${statusConfig.icon}" class="w-3 h-3 inline mr-1 ${statusConfig.iconClass || ''}"></i>` : ''}
+                                    ${statusConfig.text}
+                                </span>
+                            </div>
+                        ` : ''}
+
+                        <!-- 更多操作按钮（叠加在图片上） -->
                         <div class="absolute top-3 right-3 z-10">
                             <div class="relative" onmouseenter="showMoreOptions(${book.id})" onmouseleave="hideMoreOptions(${book.id})">
-                                <button onclick="event.stopPropagation(); toggleMoreOptions(${book.id})" class="w-8 h-8 bg-white/80 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all opacity-0 group-hover:opacity-100">
+                                <button onclick="event.stopPropagation(); toggleMoreOptions(${book.id})" class="w-8 h-8 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all opacity-0 group-hover:opacity-100">
                                     <i data-lucide="more-horizontal" class="w-4 h-4 text-gray-600"></i>
                                 </button>
                                 
                                 <!-- 更多操作菜单 -->
-                                <div id="moreOptions-${book.id}" class="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[100px] opacity-0 invisible transition-all duration-200 z-20">
-                                    <button onclick="event.stopPropagation(); confirmDeleteBook(${book.id})" class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2">
-                                        <i data-lucide="trash-2" class="w-3 h-3"></i>
-                                        删除
-                                    </button>
+                                <div id="moreOptions-${book.id}" class="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px] opacity-0 invisible transition-all duration-200 z-20">
+                                    ${getMoreOptionsMenu(book)}
                                 </div>
                             </div>
                         </div>
-                    ` : ''}
-
-                    <!-- 封面图片区域 -->
-                    <div class="w-full aspect-[4/3] ${book.coverImage ? '' : 'placeholder-image'}">
-                        ${book.coverImage 
-                            ? `<img src="${book.coverImage}" alt="${book.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">`
-                            : `<div class="text-gray-400">
-                                <i data-lucide="${getPlaceholderIcon(book.status)}" class="w-16 h-16"></i>
-                               </div>`
-                        }
                     </div>
 
-                    <!-- 内容区域 -->
-                    <div class="p-4">
-                        <h3 class="font-semibold text-gray-800 mb-3 line-clamp-1">${book.title}</h3>
-                        
-                        <!-- 进度条（仅生成中状态且有进度时显示） -->
-                        ${book.status === 'generating' && book.progress > 0 ? `
-                            <div class="mb-3">
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="text-xs text-gray-500">生成进度</span>
-                                    <span class="text-xs text-gray-500">${book.progress}%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                    <div class="bg-blue-500 h-1.5 rounded-full transition-all duration-300" style="width: ${book.progress}%"></div>
-                                </div>
-                            </div>
+                    <!-- 标题和信息（图片外部） -->
+                    <h3 class="mt-3 text-base font-semibold text-gray-800 group-hover:text-primary-600 transition-colors line-clamp-1">${book.title}</h3>
+                    
+                    <!-- 次要信息 -->
+                    <div class="mt-1 flex items-center gap-3 text-xs text-gray-500">
+                        <span class="flex items-center gap-1">
+                            <i data-lucide="calendar" class="w-3 h-3"></i>
+                            ${formatDate(book.updatedAt)}
+                        </span>
+                        ${book.pages > 0 ? `
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="book-open" class="w-3 h-3"></i>
+                                ${book.pages}页
+                            </span>
                         ` : ''}
-
-                        <!-- 底部信息 -->
-                        <div class="flex justify-between items-center text-xs text-gray-500">
-                            <span>${formatDate(book.updatedAt)}</span>
-                            ${book.pages > 0 ? `<span>${book.pages}页</span>` : '<span>-</span>'}
-                        </div>
                     </div>
-
-                    <!-- 操作按钮（非已完成状态） -->
-                    ${book.status !== 'completed' ? `
-                        <div class="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                            ${getActionButton(book)}
-                        </div>
-                    ` : ''}
                 </div>
             `;
         }
@@ -564,20 +777,73 @@
             return icons[status] || 'book-open';
         }
 
-        // 获取操作按钮
-        function getActionButton(book) {
+        // 获取更多操作菜单
+        function getMoreOptionsMenu(book) {
+            let menuItems = [];
+
+            // 根据状态添加不同的操作
             switch (book.status) {
-                case 'draft':
-                    return `<button onclick="event.stopPropagation(); editDraft(${book.id})" class="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white text-xs rounded-lg transition-all">编辑大纲</button>`;
-                case 'generating':
-                    return `<button onclick="event.stopPropagation(); viewProgress(${book.id})" class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded-lg transition-all">查看进度</button>`;
                 case 'completed':
-                    return `<button onclick="event.stopPropagation(); readBook(${book.id})" class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs rounded-lg transition-all">阅读</button>`;
+                    menuItems.push(`
+                        <button onclick="event.stopPropagation(); editBook(${book.id})" class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
+                            <i data-lucide="edit" class="w-3 h-3"></i>
+                            编辑
+                        </button>
+                    `);
+                    menuItems.push(`
+                        <button onclick="event.stopPropagation(); shareBook(${book.id})" class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
+                            <i data-lucide="share-2" class="w-3 h-3"></i>
+                            分享
+                        </button>
+                    `);
+                    menuItems.push(`
+                        <button onclick="event.stopPropagation(); downloadBook(${book.id})" class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
+                            <i data-lucide="download" class="w-3 h-3"></i>
+                            下载
+                        </button>
+                    `);
+                    break;
+
+                case 'draft':
+                    menuItems.push(`
+                        <button onclick="event.stopPropagation(); editDraft(${book.id})" class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
+                            <i data-lucide="edit-3" class="w-3 h-3"></i>
+                            编辑大纲
+                        </button>
+                    `);
+                    break;
+
+                case 'generating':
+                    menuItems.push(`
+                        <button onclick="event.stopPropagation(); cancelGeneration(${book.id})" class="w-full px-3 py-2 text-left text-sm text-orange-600 hover:bg-orange-50 transition-colors flex items-center gap-2">
+                            <i data-lucide="x-circle" class="w-3 h-3"></i>
+                            取消生成
+                        </button>
+                    `);
+                    break;
+
                 case 'failed':
-                    return `<button onclick="event.stopPropagation(); retryGeneration(${book.id})" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs rounded-lg transition-all">重试</button>`;
-                default:
-                    return '';
+                    menuItems.push(`
+                        <button onclick="event.stopPropagation(); retryGenerateBook(${book.id})" class="w-full px-3 py-2 text-left text-sm text-primary-600 hover:bg-primary-50 transition-colors flex items-center gap-2">
+                            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                            重新生成
+                        </button>
+                    `);
+                    break;
             }
+
+            // 所有状态都有删除按钮
+            if (menuItems.length > 0) {
+                menuItems.push(`<div class="border-t border-gray-100 my-1"></div>`);
+            }
+            menuItems.push(`
+                <button onclick="event.stopPropagation(); confirmDeleteBook(${book.id})" class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2">
+                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                    删除
+                </button>
+            `);
+
+            return menuItems.join('');
         }
 
         // 格式化日期
@@ -592,12 +858,6 @@
             if (diffDays <= 7) return `${diffDays}天前`;
             
             return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-        }
-
-        // 状态筛选
-        function filterByStatus() {
-            currentFilter = document.getElementById('statusFilter').value;
-            renderBooks();
         }
 
         // 打开绘本详情
@@ -671,12 +931,27 @@
         // 从大纲生成绘本
         function generateBookFromOutline(storyData) {
             console.log('从大纲生成绘本：', storyData);
-            showToast('🎨 开始生成绘本...');
             
-            // 这里可以添加实际的生成逻辑
-            setTimeout(() => {
-                showToast('✅ 绘本生成完成！');
-            }, 3000);
+            // 关闭大纲确认窗口
+            closeOutlineConfirm();
+            
+            // 找到对应的书籍（假设根据标题查找）
+            const book = booksData.find(b => b.title === storyData.title);
+            const bookId = book ? book.id : null;
+            
+            // 更新书籍状态为生成中
+            if (book) {
+                book.status = 'generating';
+                book.progress = 0;
+                book.generationStep = 1;
+                renderBooks();
+            }
+            
+            // 显示进度窗口
+            generationProgress.show(bookId, 1);
+            
+            // 模拟生成过程（实际项目中应调用后端 API）
+            simulateBookGeneration(bookId);
         }
 
         // 创建详情内容
@@ -778,6 +1053,10 @@
                     break;
                 case 'generating':
                     buttons = `
+                        <button onclick="viewProgress(${book.id})" class="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-all">
+                            <i data-lucide="eye" class="w-4 h-4 inline mr-2"></i>
+                            查看进度
+                        </button>
                         <button onclick="cancelGeneration(${book.id})" class="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-all">
                             <i data-lucide="x" class="w-4 h-4 inline mr-2"></i>
                             取消生成
@@ -846,7 +1125,14 @@
         }
 
         function viewProgress(bookId) {
-            showToast('查看生成进度');
+            const book = booksData.find(b => b.id === bookId);
+            if (!book) return;
+            
+            // 获取当前生成步骤（默认为1）
+            const currentStep = book.generationStep || 1;
+            
+            // 显示进度窗口
+            generationProgress.show(bookId, currentStep);
         }
 
         function readBook(bookId) {
@@ -919,12 +1205,37 @@
         function retryGeneration(bookId) {
             const book = booksData.find(b => b.id === bookId);
             if (book) {
-                book.status = 'generating';
+                // 回到大纲确认状态
+                book.status = 'draft';
                 book.progress = 0;
-                closeBookDetail();
                 renderBooks();
-                showToast('重新开始生成');
+                
+                // 显示提示信息
+                showToast('已恢复到大纲确认状态，请检查大纲后重新生成', 'info');
+                
+                // 自动打开大纲确认窗口
+                setTimeout(() => {
+                    openOutlineConfirm(bookId);
+                }, 500);
             }
+        }
+
+        // 重新生成绘本（从更多菜单调用）
+        function retryGenerateBook(bookId) {
+            const book = booksData.find(b => b.id === bookId);
+            if (!book) return;
+            
+            // 更新状态为生成中
+            book.status = 'generating';
+            book.progress = 0;
+            book.generationStep = 1;
+            renderBooks();
+            
+            // 显示进度窗口
+            generationProgress.show(bookId, 1);
+            
+            // 模拟生成过程
+            simulateBookGeneration(bookId);
         }
 
         function cancelGeneration(bookId) {
@@ -940,8 +1251,74 @@
             }
         }
 
+        function editBook(bookId) {
+            showToast('编辑功能开发中');
+        }
+
         function shareBook(bookId) {
             showToast('分享功能开发中');
+        }
+
+        function downloadBook(bookId) {
+            showToast('下载功能开发中');
+        }
+
+        // 模拟绘本生成过程
+        function simulateBookGeneration(bookId) {
+            const book = booksData.find(b => b.id === bookId);
+            if (!book) return;
+
+            // 第1步：分析故事大纲 (3秒)
+            setTimeout(() => {
+                if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
+                
+                book.generationStep = 2;
+                generationProgress.setCurrentStep(2);
+
+                // 第2步：生成故事脚本 (5秒)
+                setTimeout(() => {
+                    if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
+                    
+                    book.generationStep = 3;
+                    generationProgress.setCurrentStep(3);
+
+                    // 第3步：设计页面布局 (3秒)
+                    setTimeout(() => {
+                        if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
+                        
+                        book.generationStep = 4;
+                        generationProgress.setCurrentStep(4);
+
+                        // 第4步：生成插图 (4秒)
+                        setTimeout(() => {
+                            if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
+                            
+                            book.generationStep = 4;
+                            generationProgress.completeStep(4);
+                            
+                            // 生成完成
+                            setTimeout(() => {
+                                book.status = 'completed';
+                                book.progress = 100;
+                                book.generationStep = 0;
+                                book.completedAt = new Date().toISOString();
+                                renderBooks();
+                                
+                                generationProgress.complete(() => {
+                                    showToast('✅ 绘本生成完成！');
+                                    
+                                    // 自动打开绘本阅读器
+                                    setTimeout(() => {
+                                        if (window.storybookReader && window.defaultStorybookData) {
+                                            window.storybookReader.open(window.defaultStorybookData);
+                                        }
+                                    }, 500);
+                                });
+                            }, 2000);
+                        }, 4000);
+                    }, 3000);
+                }, 5000);
+            }, 3000);
         }
 
         function deleteBook(bookId) {
@@ -966,9 +1343,11 @@
             const toast = document.getElementById('toast');
             toast.textContent = message;
             
-            toast.className = `fixed top-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-2xl z-[100] transition-opacity ${
-                type === 'error' ? 'bg-red-500' : 'bg-gray-900'
-            } text-white opacity-100`;
+            let bgColor = 'bg-gray-900';
+            if (type === 'error') bgColor = 'bg-red-500';
+            else if (type === 'info') bgColor = 'bg-blue-500';
+            
+            toast.className = `fixed top-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-2xl z-[100] transition-opacity ${bgColor} text-white opacity-100`;
             
             toast.classList.remove('pointer-events-none');
             
@@ -982,12 +1361,75 @@
             }, 3000);
         }
 
+        // 大纲预览功能（失败状态）
+        let currentPreviewBookId = null;
+
+        function showOutlinePreview(bookId) {
+            const book = booksData.find(b => b.id === bookId);
+            if (!book || !book.outline) {
+                showToast('未找到大纲信息', 'error');
+                return;
+            }
+
+            currentPreviewBookId = bookId;
+            
+            // 更新标题
+            document.getElementById('outlinePreviewTitle').textContent = `《${book.title}》 - 大纲预览`;
+            
+            // 渲染大纲内容
+            const content = document.getElementById('outlinePreviewContent');
+            content.innerHTML = book.outline.map((page, index) => `
+                <div class="mb-4 p-4 bg-gray-50 border-l-4 border-primary-500 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-primary-100 text-primary-700">
+                            第 ${index + 1} 页
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-700 leading-relaxed">${page}</p>
+                </div>
+            `).join('');
+            
+            // 显示弹窗
+            const modal = document.getElementById('outlinePreviewModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // 重新渲染图标
+            setTimeout(() => {
+                lucide.createIcons();
+            }, 50);
+        }
+
+        function closeOutlinePreview() {
+            const modal = document.getElementById('outlinePreviewModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            currentPreviewBookId = null;
+        }
+
+        function editOutlineFromPreview() {
+            if (!currentPreviewBookId) return;
+            
+            closeOutlinePreview();
+            editDraft(currentPreviewBookId);
+        }
+
+        function retryFromPreview() {
+            if (!currentPreviewBookId) return;
+            
+            closeOutlinePreview();
+            retryGeneration(currentPreviewBookId);
+        }
+
 
         // ESC键关闭弹窗
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 // 检查哪个模态窗口是打开的并关闭它
-                if (window.myBooksOutlineModal && window.myBooksOutlineModal.isOpen) {
+                const outlinePreviewModal = document.getElementById('outlinePreviewModal');
+                if (outlinePreviewModal && !outlinePreviewModal.classList.contains('hidden')) {
+                    closeOutlinePreview();
+                } else if (window.myBooksOutlineModal && window.myBooksOutlineModal.isOpen) {
                     closeOutlineConfirm();
                 } else if (window.modalInstances.bookDetailModal.isOpen) {
                     closeBookDetail();
@@ -995,5 +1437,41 @@
             }
         });
     </script>
+
+    <!-- 大纲预览弹窗（失败状态查看大纲） -->
+    <div id="outlinePreviewModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col transform transition-all">
+            <!-- 弹窗头部 -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <h2 id="outlinePreviewTitle" class="text-xl font-semibold text-gray-800">大纲预览</h2>
+                    <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700">
+                        <i data-lucide="alert-circle" class="w-3 h-3 inline mr-1"></i>
+                        生成失败
+                    </span>
+                </div>
+                <button onclick="closeOutlinePreview()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
+                </button>
+            </div>
+
+            <!-- 大纲内容 -->
+            <div id="outlinePreviewContent" class="flex-1 overflow-y-auto p-6">
+                <!-- 内容将通过 JS 动态填充 -->
+            </div>
+
+            <!-- 弹窗底部操作按钮 -->
+            <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+                <button onclick="editOutlineFromPreview()" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all flex items-center gap-2">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    编辑大纲
+                </button>
+                <button onclick="retryFromPreview()" class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-primary-500 to-purple-600 rounded-lg hover:shadow-lg transition-all flex items-center gap-2">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    重新生成
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

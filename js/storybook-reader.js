@@ -9,6 +9,23 @@ class StorybookReader {
         this.isPageTransitioning = false;
         this.currentBookData = null;
         this.isInitialized = false;
+        
+        // 语音播放相关
+        this.isPlaying = false; // 当前是否正在播放
+        this.speechSynthesis = window.speechSynthesis;
+        this.currentUtterance = null; // 当前的语音对象
+        this.selectedVoice = null; // 当前选择的音色
+        this.availableVoices = []; // 可用的音色列表
+        this.voiceConfig = {
+            '温柔女声': { lang: 'zh-CN', gender: 'female', name: null },
+            '活泼童声': { lang: 'zh-CN', gender: 'female', name: null, pitch: 1.2 },
+            '磁性男声': { lang: 'zh-CN', gender: 'male', name: null },
+            '慈祥奶奶': { lang: 'zh-CN', gender: 'female', name: null, pitch: 0.9 }
+        };
+        this.currentVoiceType = this.loadVoicePreference(); // 当前音色类型
+        
+        // 初始化语音
+        this.initVoices();
     }
 
     // 初始化阅读器（在页面加载时调用）
@@ -38,19 +55,74 @@ class StorybookReader {
                 
                 <h2 id="storybookTitle" class="text-xl font-bold text-gray-800">绘本标题</h2>
                 
-                <div class="flex items-center gap-2 text-sm text-gray-600">
-                    <span id="currentPageNum">1</span>
-                    <span>/</span>
-                    <span id="totalPageNum">12</span>
+                <div class="flex items-center gap-3">
+                    <!-- 播放/暂停按钮 -->
+                    <button id="playPauseBtn" onclick="window.storybookReader.togglePlay()" class="flex items-center gap-1.5 px-4 py-1.5 bg-[#c2e7ff] hover:bg-[#a8d8f0] text-[#001d35] rounded-full text-sm font-medium transition-all shadow-sm">
+                        <i id="playPauseIcon" data-lucide="play" class="w-4 h-4"></i>
+                        <span id="playPauseText">Listen</span>
+                    </button>
+                    
+                    <!-- 音色选择器 -->
+                    <div class="relative">
+                        <button id="voiceSelectBtn" onclick="window.storybookReader.toggleVoiceMenu()" class="flex items-center gap-1.5 px-4 py-1.5 bg-[#e8eaed] hover:bg-[#dadce0] text-[#3c4043] rounded-full text-sm font-medium transition-all shadow-sm">
+                            <i data-lucide="music" class="w-4 h-4"></i>
+                            <span id="currentVoiceText">温柔女声</span>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                        </button>
+                        
+                        <!-- 音色下拉菜单 -->
+                        <div id="voiceMenu" class="hidden absolute top-full mt-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-2 min-w-[180px] z-10">
+                            <button onclick="window.storybookReader.selectVoice('温柔女声')" class="voice-option w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm">
+                                <span class="text-lg">👧</span>
+                                <span>温柔女声</span>
+                            </button>
+                            <button onclick="window.storybookReader.selectVoice('活泼童声')" class="voice-option w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm">
+                                <span class="text-lg">👦</span>
+                                <span>活泼童声</span>
+                            </button>
+                            <button onclick="window.storybookReader.selectVoice('磁性男声')" class="voice-option w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm">
+                                <span class="text-lg">👨</span>
+                                <span>磁性男声</span>
+                            </button>
+                            <button onclick="window.storybookReader.selectVoice('慈祥奶奶')" class="voice-option w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm">
+                                <span class="text-lg">👵</span>
+                                <span>慈祥奶奶</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 页码 -->
+                    <div class="flex items-center gap-2 text-sm text-gray-600">
+                        <span id="currentPageNum">1</span>
+                        <span>/</span>
+                        <span id="totalPageNum">12</span>
+                    </div>
                 </div>
             </header>
 
             <!-- 主阅读区 -->
-            <main class="h-[calc(100vh-136px)] flex items-center justify-center px-8 py-6">
+            <main class="h-[calc(100vh-68px)] flex items-center justify-center px-8 py-6 relative">
+                <!-- 左侧翻页按钮 -->
+                <button id="prevPageBtn" onclick="window.storybookReader.previousPage()" class="absolute left-4 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white hover:bg-gray-50 shadow-xl hover:shadow-2xl flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white z-50 group">
+                    <i data-lucide="chevron-left" class="w-8 h-8 text-gray-700 group-hover:text-primary-600 transition-colors"></i>
+                </button>
+                
+                <!-- 右侧翻页按钮 -->
+                <button id="nextPageBtn" onclick="window.storybookReader.nextPage()" class="absolute right-4 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white hover:bg-gray-50 shadow-xl hover:shadow-2xl flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white z-50 group">
+                    <i data-lucide="chevron-right" class="w-8 h-8 text-gray-700 group-hover:text-primary-600 transition-colors"></i>
+                </button>
+                
                 <div class="flex gap-8 h-full">
-                    <!-- 左侧图片区 - 保持图片原始比例 -->
-                    <div id="imageContainer" class="h-full flex items-center justify-center bg-white rounded-2xl shadow-2xl overflow-hidden">
-                        <img id="storybookImage" src="" alt="绘本插图" class="h-full w-auto object-contain" style="opacity: 1; transition: opacity 0.4s ease-out, transform 0.4s ease-out;">
+                    <!-- 左侧图片区 - 保持图片原始比例 1472:1136 = 1.296:1 -->
+                    <div id="imageContainer" class="h-full flex items-center justify-center bg-white rounded-2xl shadow-2xl overflow-hidden relative" style="aspect-ratio: 1472 / 1136;">
+                        <!-- 加载动画 -->
+                        <div id="imageLoader" class="absolute inset-0 flex items-center justify-center bg-gray-50">
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="w-12 h-12 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+                                <span class="text-sm text-gray-500">加载中...</span>
+                            </div>
+                        </div>
+                        <img id="storybookImage" src="" alt="绘本插图" class="h-full w-full object-cover relative z-10" style="opacity: 0; transition: opacity 0.4s ease-out, transform 0.4s ease-out;">
                     </div>
 
                     <!-- 右侧文字区 - 与图片等高 -->
@@ -90,26 +162,6 @@ class StorybookReader {
                     </div>
                 </div>
             </main>
-
-            <!-- 底部翻页控制 -->
-            <footer class="bg-white border-t border-gray-200 px-6 py-4 shadow-sm">
-                <div class="max-w-7xl mx-auto flex items-center justify-between">
-                    <button id="prevPageBtn" onclick="window.storybookReader.previousPage()" class="flex items-center gap-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500">
-                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
-                        <span>上一页</span>
-                    </button>
-
-                    <!-- 页码指示器 -->
-                    <div class="flex items-center gap-2">
-                        <div id="pageIndicators" class="flex gap-2"></div>
-                    </div>
-
-                    <button id="nextPageBtn" onclick="window.storybookReader.nextPage()" class="flex items-center gap-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500">
-                        <span>下一页</span>
-                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </footer>
         </div>
         `;
 
@@ -126,6 +178,10 @@ class StorybookReader {
         this.currentBookData = bookData;
         this.currentPage = startPage;
         
+        // 重置播放状态（默认暂停）
+        this.isPlaying = false;
+        this.stopSpeech();
+        
         const viewer = document.getElementById('storybookViewer');
         viewer.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
@@ -134,8 +190,14 @@ class StorybookReader {
         document.getElementById('storybookTitle').textContent = bookData.title;
         document.getElementById('totalPageNum').textContent = bookData.pages.length;
         
-        // 渲染页码指示器
-        this.renderPageIndicators();
+        // 更新音色显示（从localStorage加载）
+        const currentVoiceText = document.getElementById('currentVoiceText');
+        if (currentVoiceText) {
+            currentVoiceText.textContent = this.currentVoiceType;
+        }
+        
+        // 更新播放按钮状态
+        this.updatePlayPauseButton();
         
         // 显示当前页
         this.showPage(this.currentPage);
@@ -153,6 +215,9 @@ class StorybookReader {
 
     // 关闭阅读器
     close() {
+        // 停止播放
+        this.pause();
+        
         const viewer = document.getElementById('storybookViewer');
         viewer.classList.add('hidden');
         document.body.style.overflow = '';
@@ -168,10 +233,17 @@ class StorybookReader {
         
         this.isPageTransitioning = true;
         
+        // 保存播放状态
+        const wasPlaying = this.isPlaying;
+        
+        // 停止当前语音
+        this.stopSpeech();
+        
         const imageEl = document.getElementById('storybookImage');
         const textEl = document.getElementById('storybookText');
         const imageContainer = document.getElementById('imageContainer');
         const textContainer = document.getElementById('textContainer');
+        const imageLoader = document.getElementById('imageLoader');
         
         // 步骤1: 淡出当前内容
         imageEl.style.opacity = '0';
@@ -179,15 +251,7 @@ class StorybookReader {
         
         await new Promise(resolve => setTimeout(resolve, 200));
         
-        // 步骤2: 更新内容
-        try {
-            await this.preloadImage(page.image);
-            imageEl.src = page.image;
-        } catch (error) {
-            console.warn('图片加载失败:', page.image);
-            imageEl.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4=';
-        }
-        
+        // 步骤2: 立即更新文字内容并显示（不等待图片）
         textEl.innerHTML = page.text;
         
         // 更新页码显示
@@ -198,9 +262,6 @@ class StorybookReader {
         // 更新按钮状态
         this.updateNavigationButtons();
         
-        // 更新页码指示器
-        this.updatePageIndicators();
-        
         // 显示/隐藏重新开始按钮
         const restartButton = document.getElementById('restartButton');
         if (pageNum === this.currentBookData.pages.length) {
@@ -209,15 +270,42 @@ class StorybookReader {
             restartButton.classList.add('hidden');
         }
         
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // 步骤3: 淡入新内容
-        imageEl.style.opacity = '1';
+        // 立即显示文字区域
+        await new Promise(resolve => setTimeout(resolve, 50));
         textContainer.style.opacity = '1';
+        
+        // 步骤3: 异步加载图片（与文字显示并行）
+        // 显示加载动画
+        if (imageLoader) {
+            imageLoader.style.display = 'flex';
+        }
+        
+        try {
+            await this.preloadImage(page.image);
+            imageEl.src = page.image;
+        } catch (error) {
+            console.warn('图片加载失败:', page.image);
+            imageEl.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4=';
+        }
+        
+        // 隐藏加载动画
+        if (imageLoader) {
+            imageLoader.style.display = 'none';
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // 步骤4: 淡入图片
+        imageEl.style.opacity = '1';
         
         await new Promise(resolve => setTimeout(resolve, 200));
         
         this.isPageTransitioning = false;
+        
+        // 如果之前在播放，继续播放新页面
+        if (wasPlaying) {
+            this.play();
+        }
     }
 
     // 上一页
@@ -237,35 +325,6 @@ class StorybookReader {
     // 重新开始
     restart() {
         this.showPage(1);
-    }
-
-    // 渲染页码指示器
-    renderPageIndicators() {
-        if (!this.currentBookData) return;
-        
-        const container = document.getElementById('pageIndicators');
-        container.innerHTML = '';
-        
-        for (let i = 1; i <= this.currentBookData.pages.length; i++) {
-            const indicator = document.createElement('div');
-            indicator.className = `w-3 h-3 rounded-full cursor-pointer transition-all ${
-                i === this.currentPage ? 'bg-primary-500' : 'bg-gray-300 hover:bg-gray-400'
-            }`;
-            indicator.onclick = () => this.showPage(i);
-            container.appendChild(indicator);
-        }
-    }
-
-    // 更新页码指示器
-    updatePageIndicators() {
-        const indicators = document.querySelectorAll('#pageIndicators > div');
-        indicators.forEach((indicator, index) => {
-            if (index + 1 === this.currentPage) {
-                indicator.className = 'w-3 h-3 rounded-full cursor-pointer transition-all bg-primary-500';
-            } else {
-                indicator.className = 'w-3 h-3 rounded-full cursor-pointer transition-all bg-gray-300 hover:bg-gray-400';
-            }
-        });
     }
 
     // 更新导航按钮状态
@@ -300,9 +359,227 @@ class StorybookReader {
                     this.nextPage();
                 } else if (e.key === 'Escape') {
                     this.close();
+                } else if (e.key === ' ') {
+                    e.preventDefault();
+                    this.togglePlay();
                 }
             }
         });
+        
+        // 点击音色菜单外部时关闭菜单
+        document.addEventListener('click', (e) => {
+            const voiceMenu = document.getElementById('voiceMenu');
+            const voiceSelectBtn = document.getElementById('voiceSelectBtn');
+            if (voiceMenu && !voiceMenu.contains(e.target) && !voiceSelectBtn.contains(e.target)) {
+                voiceMenu.classList.add('hidden');
+            }
+        });
+    }
+
+    // ========== 语音播放相关方法 ==========
+
+    // 初始化语音
+    initVoices() {
+        // 加载可用的语音
+        const loadVoices = () => {
+            this.availableVoices = this.speechSynthesis.getVoices();
+            console.log('可用语音数量:', this.availableVoices.length);
+        };
+
+        loadVoices();
+        
+        // 某些浏览器需要在 voiceschanged 事件后才能获取语音列表
+        if (this.speechSynthesis.onvoiceschanged !== undefined) {
+            this.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+    }
+
+    // 加载用户音色偏好
+    loadVoicePreference() {
+        const saved = localStorage.getItem('storybook_voice_preference');
+        return saved || '温柔女声';
+    }
+
+    // 保存用户音色偏好
+    saveVoicePreference(voiceType) {
+        localStorage.setItem('storybook_voice_preference', voiceType);
+    }
+
+    // 获取最佳匹配的语音
+    getBestVoice(voiceType) {
+        const config = this.voiceConfig[voiceType];
+        if (!config) return null;
+
+        // 优先查找中文语音
+        let voices = this.availableVoices.filter(voice => voice.lang.includes('zh'));
+        
+        // 如果没有中文语音，使用所有可用语音
+        if (voices.length === 0) {
+            voices = this.availableVoices;
+        }
+
+        // 根据性别筛选
+        if (config.gender) {
+            const genderVoices = voices.filter(voice => {
+                const name = voice.name.toLowerCase();
+                if (config.gender === 'female') {
+                    return name.includes('female') || name.includes('woman') || name.includes('huihui') || name.includes('yaoyao');
+                } else {
+                    return name.includes('male') || name.includes('man') || name.includes('kangkang') || name.includes('云扬');
+                }
+            });
+            if (genderVoices.length > 0) {
+                voices = genderVoices;
+            }
+        }
+
+        // 返回第一个匹配的语音
+        return voices[0] || this.availableVoices[0];
+    }
+
+    // 播放/暂停切换
+    togglePlay() {
+        if (this.isPlaying) {
+            this.pause();
+        } else {
+            this.play();
+        }
+    }
+
+    // 播放当前页
+    play() {
+        if (!this.currentBookData) return;
+
+        this.isPlaying = true;
+        this.updatePlayPauseButton();
+
+        // 停止当前正在播放的语音
+        this.stopSpeech();
+
+        // 获取当前页文字
+        const page = this.currentBookData.pages[this.currentPage - 1];
+        if (!page) return;
+
+        // 提取纯文本（去除HTML标签）
+        const textEl = document.createElement('div');
+        textEl.innerHTML = page.text;
+        const text = textEl.textContent || textEl.innerText;
+
+        // 创建语音对象
+        this.currentUtterance = new SpeechSynthesisUtterance(text);
+        
+        // 设置语音
+        const voice = this.getBestVoice(this.currentVoiceType);
+        if (voice) {
+            this.currentUtterance.voice = voice;
+        }
+        this.currentUtterance.lang = 'zh-CN';
+
+        // 应用音色配置
+        const config = this.voiceConfig[this.currentVoiceType];
+        if (config.rate) {
+            this.currentUtterance.rate = config.rate;
+        } else {
+            this.currentUtterance.rate = 0.9; // 默认语速稍慢一点，更适合阅读
+        }
+        
+        if (config.pitch) {
+            this.currentUtterance.pitch = config.pitch;
+        }
+
+        // 播放结束后的处理
+        this.currentUtterance.onend = () => {
+            if (this.isPlaying) {
+                // 自动翻到下一页
+                if (this.currentPage < this.currentBookData.pages.length) {
+                    this.showPage(this.currentPage + 1).then(() => {
+                        // 翻页完成后继续播放
+                        if (this.isPlaying) {
+                            this.play();
+                        }
+                    });
+                } else {
+                    // 已经是最后一页，停止播放
+                    this.pause();
+                }
+            }
+        };
+
+        // 播放出错时的处理
+        this.currentUtterance.onerror = (event) => {
+            console.error('语音播放错误:', event);
+            this.pause();
+        };
+
+        // 开始播放
+        this.speechSynthesis.speak(this.currentUtterance);
+    }
+
+    // 暂停播放
+    pause() {
+        this.isPlaying = false;
+        this.stopSpeech();
+        this.updatePlayPauseButton();
+    }
+
+    // 停止当前语音
+    stopSpeech() {
+        if (this.speechSynthesis.speaking) {
+            this.speechSynthesis.cancel();
+        }
+        this.currentUtterance = null;
+    }
+
+    // 更新播放/暂停按钮状态
+    updatePlayPauseButton() {
+        const icon = document.getElementById('playPauseIcon');
+        const text = document.getElementById('playPauseText');
+        
+        if (!icon || !text) return;
+
+        if (this.isPlaying) {
+            icon.setAttribute('data-lucide', 'pause');
+            text.textContent = '暂停';
+        } else {
+            icon.setAttribute('data-lucide', 'play');
+            text.textContent = '播放';
+        }
+
+        // 重新创建图标
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    // 切换音色菜单
+    toggleVoiceMenu() {
+        const menu = document.getElementById('voiceMenu');
+        if (menu) {
+            menu.classList.toggle('hidden');
+        }
+    }
+
+    // 选择音色
+    selectVoice(voiceType) {
+        this.currentVoiceType = voiceType;
+        this.saveVoicePreference(voiceType);
+        
+        // 更新显示
+        const currentVoiceText = document.getElementById('currentVoiceText');
+        if (currentVoiceText) {
+            currentVoiceText.textContent = voiceType;
+        }
+
+        // 关闭菜单
+        const menu = document.getElementById('voiceMenu');
+        if (menu) {
+            menu.classList.add('hidden');
+        }
+
+        // 如果正在播放，重新开始播放（应用新音色）
+        if (this.isPlaying) {
+            this.play();
+        }
     }
 }
 

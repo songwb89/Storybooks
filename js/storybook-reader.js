@@ -101,20 +101,24 @@ class StorybookReader {
             </header>
 
             <!-- 主阅读区 -->
-            <main class="h-[calc(100vh-68px)] flex items-center justify-center px-8 py-6 relative">
-                <!-- 左侧翻页按钮 -->
-                <button id="prevPageBtn" onclick="window.storybookReader.previousPage()" class="absolute left-4 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white hover:bg-gray-50 shadow-xl hover:shadow-2xl flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white z-50 group">
-                    <i data-lucide="chevron-left" class="w-8 h-8 text-gray-700 group-hover:text-primary-600 transition-colors"></i>
+            <main class="h-[calc(100vh-68px)] w-full flex items-center justify-center py-8 relative">
+                <!-- 左侧翻页按钮 - 图标尺寸64px×64px -->
+                <button id="prevPageBtn" onclick="window.storybookReader.previousPage()" class="absolute top-1/2 -translate-y-1/2 flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed z-50 group" style="left: calc(60px - 64px - 16px + 10px);">
+                    <i data-lucide="chevron-left" class="w-16 h-16 text-gray-600 transition-transform group-hover:scale-125 group-hover:text-gray-800"></i>
                 </button>
                 
-                <!-- 右侧翻页按钮 -->
-                <button id="nextPageBtn" onclick="window.storybookReader.nextPage()" class="absolute right-4 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white hover:bg-gray-50 shadow-xl hover:shadow-2xl flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white z-50 group">
-                    <i data-lucide="chevron-right" class="w-8 h-8 text-gray-700 group-hover:text-primary-600 transition-colors"></i>
+                <!-- 右侧翻页按钮 - 图标尺寸64px×64px -->
+                <button id="nextPageBtn" onclick="window.storybookReader.nextPage()" class="absolute top-1/2 -translate-y-1/2 flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed z-50 group" style="right: calc(60px - 16px - 64px + 10px);">
+                    <i data-lucide="chevron-right" class="w-16 h-16 text-gray-600 transition-transform group-hover:scale-125 group-hover:text-gray-800"></i>
                 </button>
                 
-                <div class="flex gap-8 h-full">
+                <div class="flex gap-0 w-[calc(100%-120px)] max-h-full">
                     <!-- 左侧图片区 - 保持图片原始比例 1472:1136 = 1.296:1 -->
-                    <div id="imageContainer" class="h-full flex items-center justify-center bg-white rounded-2xl shadow-2xl overflow-hidden relative" style="aspect-ratio: 1472 / 1136;">
+                    <div id="imageContainer" class="flex-[1.296] max-h-full flex items-center justify-center bg-white rounded-l-2xl shadow-2xl overflow-hidden relative" style="aspect-ratio: 1472 / 1136; box-shadow: 
+                        /* 原有外部阴影 */
+                        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                        /* 右侧内部阴影 - 模拟页面弯曲 */
+                        inset -12px 0 15px -8px rgba(0, 0, 0, 0.25);">
                         <!-- 加载动画 -->
                         <div id="imageLoader" class="absolute inset-0 flex items-center justify-center bg-gray-50">
                             <div class="flex flex-col items-center gap-3">
@@ -126,7 +130,12 @@ class StorybookReader {
                     </div>
 
                     <!-- 右侧文字区 - 与图片等高 -->
-                    <div id="textContainer" class="h-full rounded-2xl shadow-2xl p-12 flex flex-col justify-center relative" style="aspect-ratio: 1 / 1; opacity: 1; transition: opacity 0.4s ease-out, transform 0.4s ease-out; 
+                    <div id="textContainer" class="flex-1 max-h-full rounded-r-2xl p-12 flex flex-col justify-center relative" style="aspect-ratio: 1 / 1; opacity: 1; transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+                    box-shadow: 
+                        /* 原有外部阴影 */
+                        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                        /* 左侧内部阴影 - 模拟页面弯曲 */
+                        inset 12px 0 15px -8px rgba(0, 0, 0, 0.25); 
                     background: 
                       /* 主背景色 */
                       linear-gradient(135deg, #faf9f7 0%, #f0ede8 100%),

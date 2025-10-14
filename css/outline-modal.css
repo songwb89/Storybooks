@@ -1,5 +1,111 @@
 /* 大纲确认模态窗口组件样式 */
 
+/* 风格选择器样式 */
+.style-option {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.style-option:hover {
+    transform: translateY(-2px);
+}
+
+.style-option img {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.style-option:hover img {
+    transform: scale(1.05);
+}
+
+.style-check {
+    transition: all 0.2s ease-in-out;
+}
+
+/* 风格选择器背景遮罩动画 */
+#styleSelector {
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* 风格选择器自适应布局 */
+#styleSelector > div {
+    max-height: none;
+    overflow: visible;
+}
+
+/* 风格选择器响应式调整 */
+@media (max-height: 800px) {
+    #styleSelector .grid {
+        gap: 0.75rem;
+    }
+    
+    #styleSelector .p-4 {
+        padding: 0.75rem;
+    }
+    
+    #styleSelector .aspect-\[3\/2\] {
+        aspect-ratio: 2/1;
+    }
+}
+
+@media (max-height: 700px) {
+    #styleSelector .grid {
+        gap: 0.5rem;
+    }
+    
+    #styleSelector .p-4 {
+        padding: 0.5rem;
+    }
+    
+    #styleSelector .px-6 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    #styleSelector .py-4 {
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+}
+
+#styleSelector.hidden {
+    animation: fadeOut 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* 风格选择器内容动画 */
+#styleSelector > div {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 /* 滚动条样式 */
 .outline-modal-scrollbar {
     scrollbar-width: thin;
@@ -239,4 +345,87 @@
     bottom: 0;
     width: 3px;
     background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+}
+
+/* 页数显示样式 */
+#outlinePageCount {
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#outlinePageCount:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* 页数数字动画 */
+#pageCountNumber {
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+/* 页数变化时的脉冲动画 */
+@keyframes pageCountPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); color: #ea580c; }
+    100% { transform: scale(1); }
+}
+
+.page-count-updated {
+    animation: pageCountPulse 0.4s ease-in-out;
+}
+
+/* 角色描述和场景描述文字大小调整 */
+.character-description,
+.setting-description {
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+    font-weight: 400 !important;
+}
+
+/* 针对角色和场景描述的特殊样式 */
+[data-placeholder*="角色描述"],
+[data-placeholder*="场景描述"] {
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+    font-weight: 400 !important;
+}
+
+/* 轻量化边框添加按钮样式 */
+.add-button-light {
+    background: transparent !important;
+    border: 1.5px dashed #cbd5e1 !important;
+    color: #64748b !important;
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.add-button-light:hover {
+    border-style: solid !important;
+    border-color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.05) !important;
+    color: #3b82f6 !important;
+    transform: none !important;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1) !important;
+}
+
+.add-button-light:active {
+    background: rgba(59, 130, 246, 0.1) !important;
+    transform: translateY(1px) !important;
+}
+
+/* 添加按钮图标样式 */
+.add-button-light i {
+    width: 14px !important;
+    height: 14px !important;
+    transition: transform 0.2s ease !important;
+}
+
+.add-button-light:hover i {
+    transform: scale(1.1) !important;
 }

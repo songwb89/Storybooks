@@ -526,7 +526,7 @@
 
     <!-- Confirm 确认对话框 -->
 
-    <div id="confirmModal" class="fixed inset-0 bg-black/50 z-[200] hidden flex items-center justify-center">
+    <div id="confirmModal" class="fixed inset-0 bg-black/50 z-[300] hidden flex items-center justify-center">
 
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all scale-95 opacity-0" id="confirmDialog">
 
@@ -1015,11 +1015,11 @@
             const startTime = Date.now();
             
             const tips = [
-                '✨ AI正在发挥创意，为您量身定制故事...',
-                '📝 生成的大纲完全可以自由编辑和调整',
-                '🎭 精彩的角色和情节即将诞生...',
-                '🎨 您可以随时修改故事的任何细节',
-                '📚 每个故事都是独一无二的创作'
+                'AI正在发挥创意，为您量身定制故事...',
+                '生成的大纲完全可以自由编辑和调整',
+                '精彩的角色和情节即将诞生...',
+                '您可以随时修改故事的任何细节',
+                '每个故事都是独一无二的创作'
             ];
             
             let currentTipIndex = 0;
@@ -1041,7 +1041,7 @@
                 } 
                 // 阶段1完成
                 else if (elapsed >= 1000 && elapsed < 1050) {
-                    updateStageStatus(1, 'completed', '✓ 已识别核心主题和情感基调');
+                    updateStageStatus(1, 'completed', '已识别核心主题和情感基调');
                     updateOverallStatus('主题分析完成，开始创建角色...');
                 }
                 
@@ -1052,7 +1052,7 @@
                 }
                 // 阶段2完成
                 else if (elapsed >= 3500 && elapsed < 3550) {
-                    updateStageStatus(2, 'completed', '✓ 已创建生动的角色形象和丰富背景');
+                    updateStageStatus(2, 'completed', '已创建生动的角色形象和丰富背景');
                     updateOverallStatus('角色创建完成，开始设计场景...');
                 }
                 
@@ -1063,7 +1063,7 @@
                 }
                 // 阶段3完成
                 else if (elapsed >= 6000 && elapsed < 6050) {
-                    updateStageStatus(3, 'completed', '✓ 已构建详细而富有想象力的场景');
+                    updateStageStatus(3, 'completed', '已构建详细而富有想象力的场景');
                     updateOverallStatus('场景设计完成，开始编写故事...');
                 }
                 
@@ -1078,8 +1078,8 @@
                 }
                 // 阶段4完成
                 else if (elapsed >= 10000) {
-                    updateStageStatus(4, 'completed', '✓ 已生成完整的故事大纲和章节安排');
-                    updateOverallStatus('🎉 大纲创作完成！');
+                    updateStageStatus(4, 'completed', '已生成完整的故事大纲和章节安排');
+                    updateOverallStatus('大纲创作完成！');
                     
                     clearInterval(tipInterval);
                     clearInterval(updateInterval); // 停止更新
@@ -1179,7 +1179,7 @@
         // 打开弹窗
         function openOutlineModal() {
             if (indexOutlineModal) {
-                indexOutlineModal.open(modalStoryData);
+                indexOutlineModal.open(modalStoryData, 'create'); // 首页创建模式
             }
         }
 

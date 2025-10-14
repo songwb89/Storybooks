@@ -14,6 +14,7 @@ class OutlineModal {
         
         this.storyData = null;
         this.isOpen = false;
+        this.selectedStyle = 'children_illustration'; // 默认风格
         
         this.init();
     }
@@ -29,7 +30,7 @@ class OutlineModal {
             <div id="${this.options.containerId}" class="fixed inset-0 bg-white z-[60] hidden">
                 <!-- 顶部操作栏 -->
                 <div class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm">
-                    <button onclick="outlineModal.close()" class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+                    <button onclick="outlineModal.close()" class="cancel-btn flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
                         <i data-lucide="x" class="w-5 h-5"></i>
                         <span class="font-medium">取消</span>
                     </button>
@@ -67,6 +68,19 @@ class OutlineModal {
                             />
                         </div>
 
+                        <!-- 绘本风格 -->
+                        <div class="mb-5">
+                            <div class="flex items-center gap-2 mb-2.5">
+                                <i data-lucide="palette" class="w-4 h-4 text-pink-500"></i>
+                                <h3 class="text-sm font-semibold text-gray-700">绘本风格</h3>
+                            </div>
+                            <button onclick="outlineModal.openStyleSelector()" 
+                                    class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-primary-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all flex items-center justify-between">
+                                <span id="selectedStyleText">儿童插画风</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                            </button>
+                        </div>
+
                         <!-- 主要角色区 -->
                         <div class="mb-5">
                             <div class="flex justify-between items-center mb-2.5">
@@ -75,9 +89,9 @@ class OutlineModal {
                                     <h3 class="text-sm font-semibold text-gray-700">主要角色</h3>
                                 </div>
                                 <button onclick="outlineModal.addCharacter()" 
-                                        class="flex items-center gap-1.5 px-2.5 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-xs rounded-lg transition-all hover:-translate-y-0.5 shadow-sm hover:shadow">
-                                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                                    <span>添加</span>
+                                        class="add-button-light flex items-center gap-1.5">
+                                    <i data-lucide="plus"></i>
+                                    <span>添加角色</span>
                                 </button>
                             </div>
                             <div id="modalCharactersList"></div>
@@ -91,9 +105,9 @@ class OutlineModal {
                                     <h3 class="text-sm font-semibold text-gray-700">主要场景</h3>
                                 </div>
                                 <button onclick="outlineModal.addSetting()" 
-                                        class="flex items-center gap-1.5 px-2.5 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-xs rounded-lg transition-all hover:-translate-y-0.5 shadow-sm hover:shadow">
-                                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                                    <span>添加</span>
+                                        class="add-button-light flex items-center gap-1.5">
+                                    <i data-lucide="plus"></i>
+                                    <span>添加场景</span>
                                 </button>
                             </div>
                             <div id="modalSettingsList"></div>
@@ -104,13 +118,111 @@ class OutlineModal {
                     <main class="flex-1 overflow-y-auto px-8 py-6" style="scrollbar-width: thin;">
                         <!-- 故事大纲标题 -->
                         <div class="max-w-4xl mx-auto mb-4">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="book-open" class="w-4 h-4 text-orange-500"></i>
-                                <h2 class="text-sm font-semibold text-gray-700">故事大纲</h2>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="book-open" class="w-4 h-4 text-orange-500"></i>
+                                    <h2 class="text-sm font-semibold text-gray-700">故事大纲</h2>
+                                </div>
+                                <div id="outlinePageCount" class="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-full">
+                                    <span class="text-xs font-medium text-orange-700">共 <span id="pageCountNumber">0</span> 页</span>
+                                </div>
                             </div>
                         </div>
                         <div id="modalOutlineList" class="max-w-4xl mx-auto"></div>
                     </main>
+                </div>
+            </div>
+
+            <!-- 绘本风格选择模态窗口 -->
+            <div id="styleSelector" class="fixed inset-0 bg-black bg-opacity-50 z-[70] hidden flex items-center justify-center p-2">
+                <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-none overflow-visible">
+                    <!-- 标题栏 -->
+                    <div class="bg-gradient-to-r from-pink-500 to-purple-600 px-6 py-4 text-white">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="palette" class="w-6 h-6"></i>
+                                <h2 class="text-xl font-bold">选择绘本风格</h2>
+                            </div>
+                            <button onclick="outlineModal.closeStyleSelector()" 
+                                    class="w-8 h-8 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full flex items-center justify-center transition-all">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <p class="text-pink-100 text-sm mt-2">选择您喜欢的绘本风格，不同风格会呈现不同的视觉效果</p>
+                    </div>
+                    
+                    <!-- 风格选项网格 -->
+                    <div class="p-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- 儿童插画风 -->
+                            <div onclick="outlineModal.selectStyle('children_illustration', '儿童插画风')" 
+                                 class="style-option group cursor-pointer bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-pink-400 hover:shadow-lg transition-all duration-300" 
+                                 data-style="children_illustration">
+                                <div class="aspect-[3/2] overflow-hidden">
+                                    <img src="images/儿童插画风.jpg" alt="儿童插画风" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                </div>
+                                <div class="p-2">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="text-base font-bold text-gray-800">儿童插画风</h3>
+                                        <div class="style-check hidden w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center">
+                                            <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 水彩手绘风 -->
+                            <div onclick="outlineModal.selectStyle('watercolor', '水彩手绘风')" 
+                                 class="style-option group cursor-pointer bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-blue-400 hover:shadow-lg transition-all duration-300" 
+                                 data-style="watercolor">
+                                <div class="aspect-[3/2] overflow-hidden">
+                                    <img src="images/水彩手绘风.jpg" alt="水彩手绘风" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                </div>
+                                <div class="p-2">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="text-base font-bold text-gray-800">水彩手绘风</h3>
+                                        <div class="style-check hidden w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                            <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 日式卡通风 -->
+                            <div onclick="outlineModal.selectStyle('japanese_cartoon', '日式卡通风')" 
+                                 class="style-option group cursor-pointer bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-purple-400 hover:shadow-lg transition-all duration-300" 
+                                 data-style="japanese_cartoon">
+                                <div class="aspect-[3/2] overflow-hidden">
+                                    <img src="images/日式卡通风.jpg" alt="日式卡通风" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                </div>
+                                <div class="p-2">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="text-base font-bold text-gray-800">日式卡通风</h3>
+                                        <div class="style-check hidden w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                                            <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 剪纸艺术风 -->
+                            <div onclick="outlineModal.selectStyle('paper_cut', '剪纸艺术风')" 
+                                 class="style-option group cursor-pointer bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-orange-400 hover:shadow-lg transition-all duration-300" 
+                                 data-style="paper_cut">
+                                <div class="aspect-[3/2] overflow-hidden">
+                                    <img src="images/剪纸艺术风.jpg" alt="剪纸艺术风" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                </div>
+                                <div class="p-2">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="text-base font-bold text-gray-800">剪纸艺术风</h3>
+                                        <div class="style-check hidden w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                                            <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -132,8 +244,9 @@ class OutlineModal {
         // 标题编辑功能已移除（现在标题只在顶部显示，不可编辑）
     }
     
-    open(storyData) {
+    open(storyData, mode = 'create') {
         this.storyData = storyData || this.getDefaultStoryData();
+        this.mode = mode; // 保存模式：'create' 新建模式，'edit' 编辑模式
         this.isOpen = true;
         
         const modal = document.getElementById(this.options.containerId);
@@ -143,6 +256,9 @@ class OutlineModal {
             
             this.renderContent();
             
+            // 根据模式更新左上角按钮文字
+            this.updateCancelButtonText();
+            
             // 重新创建图标
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
@@ -150,11 +266,21 @@ class OutlineModal {
         }
     }
     
+    // 根据模式更新左上角按钮文字
+    updateCancelButtonText() {
+        const cancelButtonSpan = document.querySelector('#outlineModal .cancel-btn span');
+        if (cancelButtonSpan) {
+            const buttonText = this.mode === 'edit' ? '关闭' : '取消';
+            cancelButtonSpan.textContent = buttonText;
+        }
+    }
+    
     async close() {
-        if (typeof showConfirm === 'function') {
+        // 编辑模式直接关闭，新建模式需要二次确认
+        if (this.mode === 'create' && typeof showConfirm === 'function') {
             const confirmed = await showConfirm(
-                '确定要关闭吗？未保存的修改将会丢失。',
-                '关闭确认'
+                '确定要取消吗？未保存的修改将会丢失。',
+                '取消确认'
             );
             if (!confirmed) return;
         }
@@ -201,6 +327,7 @@ class OutlineModal {
         if (!this.storyData) return;
         
         this.renderTitle();
+        this.renderStyle();
         this.renderCharacters();
         this.renderSettings();
         this.renderOutline();
@@ -221,6 +348,25 @@ class OutlineModal {
         
         this.storyData.core_elements.title = newTitle.trim();
         this.markAsModified();
+    }
+    
+    renderStyle() {
+        const selectedStyleText = document.getElementById('selectedStyleText');
+        if (!selectedStyleText || !this.storyData.core_elements) return;
+        
+        // 获取当前风格
+        const currentStyle = this.storyData.core_elements.style || 'children_illustration';
+        this.selectedStyle = currentStyle;
+        
+        // 更新显示文本
+        const styleTexts = {
+            'children_illustration': '儿童插画风',
+            'watercolor': '水彩手绘风',
+            'japanese_cartoon': '日式卡通风',
+            'paper_cut': '剪纸艺术风'
+        };
+        
+        selectedStyleText.textContent = styleTexts[currentStyle] || '儿童插画风';
     }
     
     renderCharacters() {
@@ -244,7 +390,7 @@ class OutlineModal {
                      class="text-sm font-semibold mb-1.5 px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer ${char.name ? 'text-gray-800' : 'text-gray-400'}" 
                      data-placeholder="请输入角色名">${char.name || '<span class="placeholder-text">请输入角色名</span>'}</div>
                 <div onclick="outlineModal.editCardField(this, 'characters', ${index}, 'description', '请输入角色描述')" 
-                     class="text-xs leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px] ${char.description ? 'text-gray-600' : 'text-gray-400'}" 
+                     class="character-description text-xs leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px] ${char.description ? 'text-gray-600' : 'text-gray-400'}" 
                      data-placeholder="请输入角色描述">${char.description || '<span class="placeholder-text">请输入角色描述</span>'}</div>
             </div>
         `).join('');
@@ -275,7 +421,7 @@ class OutlineModal {
                      class="text-sm font-semibold mb-1.5 px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer ${setting.name ? 'text-gray-800' : 'text-gray-400'}" 
                      data-placeholder="请输入场景名">${setting.name || '<span class="placeholder-text">请输入场景名</span>'}</div>
                 <div onclick="outlineModal.editCardField(this, 'settings', ${index}, 'description', '请输入场景描述')" 
-                     class="text-xs leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px] ${setting.description ? 'text-gray-600' : 'text-gray-400'}" 
+                     class="setting-description text-xs leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px] ${setting.description ? 'text-gray-600' : 'text-gray-400'}" 
                      data-placeholder="请输入场景描述">${setting.description || '<span class="placeholder-text">请输入场景描述</span>'}</div>
             </div>
         `).join('');
@@ -403,7 +549,29 @@ class OutlineModal {
     
     updatePageCount() {
         if (this.storyData && this.storyData.outline && this.storyData.core_elements) {
-            this.storyData.core_elements.page_count = this.storyData.outline.length;
+            const pageCount = this.storyData.outline.length;
+            const oldPageCount = this.storyData.core_elements.page_count || 0;
+            this.storyData.core_elements.page_count = pageCount;
+            
+            // 更新页数显示
+            const pageCountElement = document.getElementById('pageCountNumber');
+            if (pageCountElement) {
+                const hasChanged = oldPageCount !== pageCount;
+                pageCountElement.textContent = pageCount;
+                
+                // 如果页数发生变化，添加动画效果
+                if (hasChanged && oldPageCount > 0) {
+                    pageCountElement.classList.remove('page-count-updated');
+                    // 强制重排以重新触发动画
+                    pageCountElement.offsetHeight;
+                    pageCountElement.classList.add('page-count-updated');
+                    
+                    // 动画结束后移除类
+                    setTimeout(() => {
+                        pageCountElement.classList.remove('page-count-updated');
+                    }, 400);
+                }
+            }
         }
     }
     
@@ -448,6 +616,14 @@ class OutlineModal {
     // 删除角色
     deleteCharacter(index) {
         if (this.storyData.core_elements.characters) {
+            // 检查是否只剩一个角色
+            if (this.storyData.core_elements.characters.length <= 1) {
+                if (typeof showToast === 'function') {
+                    showToast('至少需要保留一个主要角色！', 'error');
+                }
+                return;
+            }
+            
             this.storyData.core_elements.characters.splice(index, 1);
             this.renderCharacters();
         }
@@ -546,6 +722,14 @@ class OutlineModal {
     // 删除场景
     deleteSetting(index) {
         if (this.storyData.core_elements.settings) {
+            // 检查是否只剩一个场景
+            if (this.storyData.core_elements.settings.length <= 1) {
+                if (typeof showToast === 'function') {
+                    showToast('至少需要保留一个主要场景！', 'error');
+                }
+                return;
+            }
+            
             // 获取被删除的场景名称
             const deletedSceneName = this.storyData.core_elements.settings[index].name;
             
@@ -661,6 +845,93 @@ class OutlineModal {
         });
     }
     
+    // 打开风格选择器
+    openStyleSelector() {
+        const styleSelector = document.getElementById('styleSelector');
+        if (styleSelector) {
+            styleSelector.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            // 更新当前选中状态
+            this.updateStyleSelection();
+            
+            // 重新创建图标
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+    }
+    
+    // 关闭风格选择器
+    closeStyleSelector() {
+        const styleSelector = document.getElementById('styleSelector');
+        if (styleSelector) {
+            styleSelector.classList.add('hidden');
+            document.body.style.overflow = 'hidden'; // 保持主模态窗口的overflow设置
+        }
+    }
+    
+    // 选择风格
+    selectStyle(styleValue, styleText) {
+        this.selectedStyle = styleValue;
+        
+        // 更新显示文本
+        const selectedStyleText = document.getElementById('selectedStyleText');
+        if (selectedStyleText) {
+            selectedStyleText.textContent = styleText;
+        }
+        
+        // 更新故事数据
+        if (!this.storyData.core_elements) {
+            this.storyData.core_elements = {};
+        }
+        this.storyData.core_elements.style = styleValue;
+        
+        // 关闭选择器
+        this.closeStyleSelector();
+        
+        // 显示选择成功提示
+        if (typeof showToast === 'function') {
+            showToast(`已选择 ${styleText}`);
+        }
+    }
+    
+    // 更新风格选择状态
+    updateStyleSelection() {
+        // 清除所有选中状态
+        document.querySelectorAll('.style-option').forEach(option => {
+            option.classList.remove('border-pink-400', 'border-blue-400', 'border-purple-400', 'border-orange-400');
+            option.classList.add('border-gray-200');
+            option.querySelector('.style-check').classList.add('hidden');
+        });
+        
+        // 设置当前选中项
+        const selectedOption = document.querySelector(`[data-style="${this.selectedStyle}"]`);
+        if (selectedOption) {
+            selectedOption.classList.remove('border-gray-200');
+            const styleCheck = selectedOption.querySelector('.style-check');
+            if (styleCheck) {
+                styleCheck.classList.remove('hidden');
+            }
+            
+            // 根据不同风格设置不同的边框颜色
+            switch(this.selectedStyle) {
+                case 'children_illustration':
+                    selectedOption.classList.add('border-pink-400');
+                    break;
+                case 'watercolor':
+                    selectedOption.classList.add('border-blue-400');
+                    break;
+                case 'japanese_cartoon':
+                    selectedOption.classList.add('border-purple-400');
+                    break;
+                case 'paper_cut':
+                    selectedOption.classList.add('border-orange-400');
+                    break;
+            }
+        }
+    }
+
     getDefaultStoryData() {
         return {
             "core_elements": {
@@ -668,7 +939,8 @@ class OutlineModal {
                 "characters": [],
                 "theme": "故事主题",
                 "settings": [],
-                "page_count": 0
+                "page_count": 0,
+                "style": "children_illustration"
             },
             "outline": []
         };

@@ -94,7 +94,7 @@ class GenerationProgress {
                         <!-- 提示信息 -->
                         <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
                             <div class="flex items-center space-x-2">
-                                <span class="text-amber-600">💡</span>
+                                <span class="text-amber-600">•</span>
                                 <span class="text-sm text-amber-700">您可以关闭窗口，生成会在后台继续</span>
                             </div>
                         </div>
@@ -162,8 +162,17 @@ class GenerationProgress {
     /**
      * 取消生成
      */
-    cancel() {
-        if (confirm('确定要取消生成吗？')) {
+    async cancel() {
+        // 使用自定义确认对话框
+        let confirmed = false;
+        if (typeof showConfirm === 'function') {
+            confirmed = await showConfirm('确定要取消生成吗？', '取消确认', '确定');
+        } else {
+            // 降级到原生 confirm（如果自定义函数不可用）
+            confirmed = confirm('确定要取消生成吗？');
+        }
+        
+        if (confirmed) {
             this.isGenerating = false;
             this.close();
             
@@ -206,22 +215,22 @@ class GenerationProgress {
             1: {
                 pending: '准备解析故事结构和角色关系...',
                 active: '正在深度分析故事结构和角色关系...',
-                completed: '✓ 已解析故事结构和角色关系'
+                completed: '已解析故事结构和角色关系'
             },
             2: {
                 pending: '等待编写详细的故事内容...',
                 active: '正在编写详细的故事内容...',
-                completed: '✓ 已编写完整的故事脚本'
+                completed: '已编写完整的故事脚本'
             },
             3: {
                 pending: '等待页面布局设计...',
                 active: '正在设计页面布局...',
-                completed: '✓ 已完成页面布局设计'
+                completed: '已完成页面布局设计'
             },
             4: {
                 pending: '等待AI绘制精美插图...',
                 active: '正在生成精美插图...',
-                completed: '✓ 已生成所有插图'
+                completed: '已生成所有插图'
             }
         };
 

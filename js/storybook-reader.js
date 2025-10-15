@@ -234,7 +234,8 @@ class StorybookReader {
     }
 
     // 显示指定页(带平滑过渡)
-    async showPage(pageNum) {
+    // autoPlay: 是否在翻页后自动播放（用于区分自动翻页和手动翻页）
+    async showPage(pageNum, autoPlay = null) {
         if (this.isPageTransitioning || !this.currentBookData) return;
         
         const page = this.currentBookData.pages[pageNum - 1];
@@ -242,8 +243,8 @@ class StorybookReader {
         
         this.isPageTransitioning = true;
         
-        // 保存播放状态
-        const wasPlaying = this.isPlaying;
+        // 保存播放状态（如果没有明确指定autoPlay，则使用当前播放状态）
+        const shouldAutoPlay = autoPlay !== null ? autoPlay : this.isPlaying;
         
         // 停止当前语音
         this.stopSpeech();
@@ -311,8 +312,8 @@ class StorybookReader {
         
         this.isPageTransitioning = false;
         
-        // 如果之前在播放，继续播放新页面
-        if (wasPlaying) {
+        // 如果需要自动播放，继续播放新页面
+        if (shouldAutoPlay) {
             this.play();
         }
     }
@@ -501,12 +502,8 @@ class StorybookReader {
             if (this.isPlaying) {
                 // 自动翻到下一页
                 if (this.currentPage < this.currentBookData.pages.length) {
-                    this.showPage(this.currentPage + 1).then(() => {
-                        // 翻页完成后继续播放
-                        if (this.isPlaying) {
-                            this.play();
-                        }
-                    });
+                    // showPage 会自动根据当前的 isPlaying 状态继续播放
+                    this.showPage(this.currentPage + 1);
                 } else {
                     // 已经是最后一页，停止播放
                     this.pause();

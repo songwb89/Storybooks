@@ -15,6 +15,7 @@ class OutlineModal {
         this.storyData = null;
         this.isOpen = false;
         this.selectedStyle = 'children_illustration'; // 默认风格
+        this.titleValidationBound = false; // 标记是否已绑定标题校验事件
         
         this.init();
     }
@@ -64,8 +65,14 @@ class OutlineModal {
                                 id="modalStoryTitle" 
                                 class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                 placeholder="请输入标题..."
+                                maxlength="50"
                                 onchange="outlineModal.updateStoryTitle(this.value)"
                             />
+                            <!-- 错误提示 -->
+                            <div id="modalStoryTitleError" class="text-amber-600 text-xs flex items-center gap-1 mt-1.5 invisible">
+                                <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+                                <span id="modalStoryTitleErrorText"></span>
+                            </div>
                         </div>
 
                         <!-- 绘本风格 -->
@@ -237,11 +244,232 @@ class OutlineModal {
         // 设置可编辑元素的事件监听
         document.addEventListener('DOMContentLoaded', () => {
             this.setupEditableElements();
+            this.setupTitleValidation();
         });
     }
     
     setupEditableElements() {
         // 标题编辑功能已移除（现在标题只在顶部显示，不可编辑）
+    }
+    
+    setupTitleValidation() {
+        // 如果已经绑定过事件，则不重复绑定
+        if (this.titleValidationBound) return;
+        
+        const titleInput = document.getElementById('modalStoryTitle');
+        if (!titleInput) return;
+        
+        // 监听失焦事件，进行校验
+        titleInput.addEventListener('blur', () => {
+            const value = titleInput.value.trim();
+            // 只有在有内容时才校验（避免刚打开弹窗就报错）
+            if (value.length > 0) {
+                this.validateStoryTitle(true);
+            }
+        });
+        
+        // 监听获得焦点事件，清除错误提示
+        titleInput.addEventListener('focus', () => {
+            const errorDiv = document.getElementById('modalStoryTitleError');
+            if (errorDiv) {
+                errorDiv.classList.add('invisible');
+                titleInput.classList.remove('input-error');
+            }
+        });
+        
+        this.titleValidationBound = true;
+    }
+    
+    validateStoryTitle(showError = false) {
+        const titleInput = document.getElementById('modalStoryTitle');
+        const errorDiv = document.getElementById('modalStoryTitleError');
+        const errorText = document.getElementById('modalStoryTitleErrorText');
+        
+        if (!titleInput) return true;
+        
+        const value = titleInput.value.trim();
+        
+        // 必填校验
+        if (value.length === 0) {
+            if (showError && errorDiv && errorText) {
+                errorText.textContent = '请输入故事标题';
+                errorDiv.classList.remove('invisible');
+                titleInput.classList.add('input-error');
+                
+                // 抖动动画
+                titleInput.classList.add('shake-animation');
+                setTimeout(() => titleInput.classList.remove('shake-animation'), 500);
+            }
+            return false;
+        }
+        
+        // 校验通过，清除错误提示
+        if (errorDiv) {
+            errorDiv.classList.add('invisible');
+            titleInput.classList.remove('input-error');
+        }
+        
+        return true;
+    }
+    
+    // 校验单个卡片，返回第一个错误信息（优先显示空值错误）
+    validateCard(cardElement, cardType) {
+        const nameField = cardElement.querySelector(`.${cardType}-name`);
+        const descField = cardElement.querySelector(`.${cardType}-description`);
+        const fieldLabel = cardType === 'character' ? '角色' : '场景';
+        
+        // 获取字段文本内容
+        let name = nameField?.textContent.trim() || '';
+        let desc = descField?.textContent.trim() || '';
+        
+        // 检查是否包含占位符span标签
+        if (nameField?.querySelector('.placeholder-text')) {
+            name = '';
+        }
+        if (descField?.querySelector('.placeholder-text')) {
+            desc = '';
+        }
+        
+        // 优先级1：检查是否为空
+        if (!name) {
+            return `请输入${fieldLabel}名`;
+        }
+        if (!desc) {
+            return `请输入${fieldLabel}描述`;
+        }
+        
+        // 优先级2：检查字数超限
+        if (name.length > 50) {
+            return `${fieldLabel}名最多50个字符`;
+        }
+        if (desc.length > 500) {
+            return `${fieldLabel}描述最多500个字符`;
+        }
+        
+        return null; // 无错误
+    }
+    
+    // 验证单个大纲页面
+    validateOutlinePage(page, pageNumber) {
+        // 检查是否选择了场景
+        if (!page.scene || page.scene.trim() === '') {
+            return '请选择场景';
+        }
+        
+        // 获取情节内容
+        let plot = page.plot_summary?.trim() || '';
+        
+        // 检查情节是否为空
+        if (!plot) {
+            return '请输入情节内容';
+        }
+        
+        // 检查情节字数是否超过500字
+        if (plot.length > 500) {
+            return '情节最多500个字符';
+        }
+        
+        return null; // 无错误
+    }
+    
+    // 显示卡片错误提示
+    showCardError(cardElement, errorMessage) {
+        // 查找卡片的父容器
+        const cardContainer = cardElement.parentElement;
+        
+        // 查找或创建错误提示元素
+        let errorDiv = cardContainer.querySelector('.card-error-message');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'card-error-message text-amber-600 text-xs flex items-center gap-1 mt-1.5 mb-3 px-1.5 invisible';
+            cardContainer.appendChild(errorDiv);
+        }
+        
+        errorDiv.innerHTML = `<i data-lucide="alert-circle" class="w-3.5 h-3.5"></i><span>${errorMessage}</span>`;
+        errorDiv.classList.remove('invisible');
+        
+        // 重新创建图标
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+    
+    // 清除单个卡片的错误提示
+    clearCardError(cardElement) {
+        const cardContainer = cardElement.parentElement;
+        const errorDiv = cardContainer?.querySelector('.card-error-message');
+        if (errorDiv) {
+            errorDiv.classList.add('invisible');
+        }
+    }
+    
+    // 清除所有卡片的错误提示
+    clearAllCardErrors() {
+        document.querySelectorAll('.card-error-message').forEach(errorDiv => {
+            errorDiv.classList.add('invisible');
+        });
+    }
+    
+    // 显示大纲页面错误提示
+    showOutlineError(pageIndex, errorMessage) {
+        const pageElement = document.getElementById(`page-${pageIndex}`);
+        if (!pageElement) return;
+        
+        // 获取外层容器
+        const container = pageElement.parentElement;
+        if (!container) return;
+        
+        // 查找或创建错误提示元素
+        let errorDiv = container.querySelector('.outline-error-message');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'outline-error-message text-amber-600 text-xs flex items-center gap-1 mt-2 px-2 invisible';
+            container.appendChild(errorDiv);
+        }
+        
+        errorDiv.innerHTML = `<i data-lucide="alert-circle" class="w-3.5 h-3.5"></i><span>${errorMessage}</span>`;
+        errorDiv.classList.remove('invisible');
+        
+        // 添加边框高亮
+        pageElement.classList.add('border-amber-400', 'bg-amber-50/30');
+        
+        // 重新创建图标
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+    
+    // 清除单个大纲页面的错误提示
+    clearOutlineError(pageIndex) {
+        const pageElement = document.getElementById(`page-${pageIndex}`);
+        if (!pageElement) return;
+        
+        // 获取外层容器
+        const container = pageElement.parentElement;
+        if (!container) return;
+        
+        const errorDiv = container.querySelector('.outline-error-message');
+        if (errorDiv) {
+            errorDiv.classList.add('invisible');
+        }
+        
+        // 移除边框高亮
+        pageElement.classList.remove('border-amber-400', 'bg-amber-50/30');
+    }
+    
+    // 清除所有大纲页面的错误提示
+    clearAllOutlineErrors() {
+        document.querySelectorAll('.outline-error-message').forEach(errorDiv => {
+            errorDiv.classList.add('invisible');
+        });
+        
+        // 移除所有边框高亮
+        this.storyData.outline?.forEach((_, index) => {
+            const pageElement = document.getElementById(`page-${index}`);
+            if (pageElement) {
+                pageElement.classList.remove('border-amber-400', 'bg-amber-50/30');
+            }
+        });
     }
     
     open(storyData, mode = 'create') {
@@ -255,6 +483,9 @@ class OutlineModal {
             document.body.style.overflow = 'hidden';
             
             this.renderContent();
+            
+            // 绑定标题输入框的事件监听器
+            this.setupTitleValidation();
             
             // 根据模式更新左上角按钮文字
             this.updateCancelButtonText();
@@ -296,6 +527,11 @@ class OutlineModal {
     }
     
     saveDraft() {
+        // 校验标题
+        if (!this.validateStoryTitle(true)) {
+            return;
+        }
+        
         this.options.onSave(this.storyData);
         
         // 显示保存成功提示
@@ -308,6 +544,84 @@ class OutlineModal {
     }
     
     generate() {
+        // 校验标题
+        if (!this.validateStoryTitle(true)) {
+            return;
+        }
+        
+        // 清除所有旧的卡片错误提示
+        this.clearAllCardErrors();
+        
+        let hasError = false;
+        let errorCount = 0;
+        let firstErrorCard = null;
+        
+        // 校验所有角色卡片
+        const characterCards = document.querySelectorAll('.character-card');
+        characterCards.forEach(card => {
+            const error = this.validateCard(card, 'character');
+            if (error) {
+                this.showCardError(card, error);
+                hasError = true;
+                errorCount++;
+                if (!firstErrorCard) {
+                    firstErrorCard = card;
+                }
+            }
+        });
+        
+        // 校验所有场景卡片
+        const settingCards = document.querySelectorAll('.setting-card');
+        settingCards.forEach(card => {
+            const error = this.validateCard(card, 'setting');
+            if (error) {
+                this.showCardError(card, error);
+                hasError = true;
+                errorCount++;
+                if (!firstErrorCard) {
+                    firstErrorCard = card;
+                }
+            }
+        });
+        
+        // 清除所有旧的大纲错误提示
+        this.clearAllOutlineErrors();
+        
+        // 校验所有大纲页面
+        let firstErrorPageIndex = -1;
+        this.storyData.outline?.forEach((page, index) => {
+            const error = this.validateOutlinePage(page, index + 1);
+            if (error) {
+                this.showOutlineError(index, error);
+                hasError = true;
+                errorCount++;
+                if (firstErrorPageIndex === -1) {
+                    firstErrorPageIndex = index;
+                }
+            }
+        });
+        
+        // 如果有错误
+        if (hasError) {
+            // 优先滚动到第一个有错误的大纲页面，否则滚动到第一个有错误的卡片
+            if (firstErrorPageIndex !== -1) {
+                const pageElement = document.getElementById(`page-${firstErrorPageIndex}`);
+                if (pageElement) {
+                    pageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } else if (firstErrorCard) {
+                firstErrorCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            // 全局提示
+            if (typeof showToast === 'function') {
+                showToast(`发现 ${errorCount} 个错误需要修正，请检查提示信息`, 'warning');
+            }
+            
+            return; // 中止生成
+        }
+        
+        // 校验通过，执行生成
         this.options.onGenerate(this.storyData);
     }
     
@@ -381,17 +695,19 @@ class OutlineModal {
         }
 
         container.innerHTML = characters.map((char, index) => `
-            <div class="group relative bg-white border border-gray-200 rounded-xl p-3 mb-2.5 hover:border-primary-300 hover:shadow-sm transition-all" data-character-index="${index}">
-                <button onclick="outlineModal.deleteCharacter(${index})" 
-                        class="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
-                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                </button>
-                <div onclick="outlineModal.editCardField(this, 'characters', ${index}, 'name', '请输入角色名')" 
-                     class="text-sm font-semibold mb-1.5 px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer ${char.name ? 'text-gray-800' : 'text-gray-400'}" 
-                     data-placeholder="请输入角色名">${char.name || '<span class="placeholder-text">请输入角色名</span>'}</div>
-                <div onclick="outlineModal.editCardField(this, 'characters', ${index}, 'description', '请输入角色描述')" 
-                     class="character-description text-xs leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px] ${char.description ? 'text-gray-600' : 'text-gray-400'}" 
-                     data-placeholder="请输入角色描述">${char.description || '<span class="placeholder-text">请输入角色描述</span>'}</div>
+            <div>
+                <div class="character-card group relative bg-white border border-gray-200 rounded-xl p-3 mb-2.5 hover:border-primary-300 hover:shadow-sm transition-all" data-character-index="${index}">
+                    <button onclick="outlineModal.deleteCharacter(${index})" 
+                            class="absolute top-2 right-2 w-6 h-6 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <div onclick="outlineModal.editCardField(this, 'characters', ${index}, 'name', '请输入角色名')" 
+                         class="character-name text-sm font-semibold mb-1.5 px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer ${char.name ? 'text-gray-800' : 'text-gray-400'}" 
+                         data-placeholder="请输入角色名">${char.name || '<span class="placeholder-text">请输入角色名</span>'}</div>
+                    <div onclick="outlineModal.editCardField(this, 'characters', ${index}, 'description', '请输入角色描述')" 
+                         class="character-description text-xs leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px] ${char.description ? 'text-gray-600' : 'text-gray-400'}" 
+                         data-placeholder="请输入角色描述">${char.description || '<span class="placeholder-text">请输入角色描述</span>'}</div>
+                </div>
             </div>
         `).join('');
         
@@ -412,17 +728,19 @@ class OutlineModal {
         }
 
         container.innerHTML = settings.map((setting, index) => `
-            <div class="group relative bg-white border border-gray-200 rounded-xl p-3 mb-2.5 hover:border-emerald-300 hover:shadow-sm transition-all" data-setting-index="${index}">
-                <button onclick="outlineModal.deleteSetting(${index})" 
-                        class="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
-                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                </button>
-                <div onclick="outlineModal.editCardField(this, 'settings', ${index}, 'name', '请输入场景名')" 
-                     class="text-sm font-semibold mb-1.5 px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer ${setting.name ? 'text-gray-800' : 'text-gray-400'}" 
-                     data-placeholder="请输入场景名">${setting.name || '<span class="placeholder-text">请输入场景名</span>'}</div>
-                <div onclick="outlineModal.editCardField(this, 'settings', ${index}, 'description', '请输入场景描述')" 
-                     class="setting-description text-xs leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px] ${setting.description ? 'text-gray-600' : 'text-gray-400'}" 
-                     data-placeholder="请输入场景描述">${setting.description || '<span class="placeholder-text">请输入场景描述</span>'}</div>
+            <div>
+                <div class="setting-card group relative bg-white border border-gray-200 rounded-xl p-3 mb-2.5 hover:border-emerald-300 hover:shadow-sm transition-all" data-setting-index="${index}">
+                    <button onclick="outlineModal.deleteSetting(${index})" 
+                            class="absolute top-2 right-2 w-6 h-6 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <div onclick="outlineModal.editCardField(this, 'settings', ${index}, 'name', '请输入场景名')" 
+                         class="setting-name text-sm font-semibold mb-1.5 px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer ${setting.name ? 'text-gray-800' : 'text-gray-400'}" 
+                         data-placeholder="请输入场景名">${setting.name || '<span class="placeholder-text">请输入场景名</span>'}</div>
+                    <div onclick="outlineModal.editCardField(this, 'settings', ${index}, 'description', '请输入场景描述')" 
+                         class="setting-description text-xs leading-relaxed px-1.5 py-1 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[36px] ${setting.description ? 'text-gray-600' : 'text-gray-400'}" 
+                         data-placeholder="请输入场景描述">${setting.description || '<span class="placeholder-text">请输入场景描述</span>'}</div>
+                </div>
             </div>
         `).join('');
         
@@ -471,32 +789,34 @@ class OutlineModal {
                 </div>
             </div>`;
             
-            // 页面卡片
+            // 页面卡片容器
             const isHighlight = index === highlightIndex;
             html += `
-            <div id="page-${index}" class="group relative bg-white border border-gray-200 rounded-2xl p-6 mb-4 hover:border-primary-300 hover:shadow-md transition-all ${isHighlight ? 'page-highlight' : ''}">
-                ${canDelete ? `
-                <button onclick="outlineModal.deletePage(${index})" 
-                        class="absolute top-4 right-4 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-                ` : ''}
-                
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 bg-gradient-to-r from-primary-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                        ${page.page_number || index + 1}
+            <div class="relative mb-4">
+                <div id="page-${index}" class="group relative bg-white border border-gray-200 rounded-2xl p-6 hover:border-primary-300 hover:shadow-md transition-all ${isHighlight ? 'page-highlight' : ''}">
+                    ${canDelete ? `
+                    <button onclick="outlineModal.deletePage(${index})" 
+                            class="absolute top-4 right-4 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                    ` : ''}
+                    
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-gradient-to-r from-primary-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            ${page.page_number || index + 1}
+                        </div>
+                        <div class="flex-1">
+                            <select onchange="outlineModal.updatePageScene(${index}, this.value)" 
+                                    class="text-sm font-semibold px-2 py-1 rounded border border-gray-200 hover:border-primary-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 cursor-pointer bg-white outline-none transition-all ${page.scene ? 'text-primary-600' : 'text-gray-400'}">
+                                <option value="" disabled ${!page.scene ? 'selected' : ''} hidden>选择场景...</option>
+                                ${this.getSettingsOptions(page.scene)}
+                            </select>
+                        </div>
                     </div>
-                    <div class="flex-1">
-                        <select onchange="outlineModal.updatePageScene(${index}, this.value)" 
-                                class="text-sm font-semibold px-2 py-1 rounded border border-gray-200 hover:border-primary-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 cursor-pointer bg-white outline-none transition-all ${page.scene ? 'text-primary-600' : 'text-gray-400'}">
-                            <option value="" disabled ${!page.scene ? 'selected' : ''} hidden>选择场景...</option>
-                            ${this.getSettingsOptions(page.scene)}
-                        </select>
-                    </div>
+                    
+                    <div onclick="outlineModal.editPageField(this, ${index}, 'plot_summary')" 
+                         class="leading-relaxed px-2 py-2 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[60px] ${page.plot_summary && page.plot_summary.trim() ? 'text-gray-700' : 'text-gray-400'}">${page.plot_summary && page.plot_summary.trim() ? page.plot_summary : '请输入情节内容...'}</div>
                 </div>
-                
-                <div onclick="outlineModal.editPageField(this, ${index}, 'plot_summary')" 
-                     class="text-gray-700 leading-relaxed px-2 py-2 rounded border border-transparent hover:bg-gray-50 cursor-pointer min-h-[60px]">${page.plot_summary || '情节描述'}</div>
             </div>`;
         });
         
@@ -591,6 +911,10 @@ class OutlineModal {
     updatePageScene(index, sceneName) {
         if (this.storyData.outline[index]) {
             this.storyData.outline[index].scene = sceneName;
+            
+            // 清除当前页面的错误提示
+            this.clearOutlineError(index);
+            
             // 重新渲染大纲以更新样式
             this.renderOutline();
         }
@@ -665,7 +989,7 @@ class OutlineModal {
         const newPage = {
             page_number: index + 1,
             scene: '',
-            plot_summary: '请输入情节内容...',
+            plot_summary: '',
             characters: [],
             key_elements: []
         };
@@ -698,7 +1022,7 @@ class OutlineModal {
         const newPage = {
             page_number: index + 2,
             scene: '',
-            plot_summary: '请输入情节内容...',
+            plot_summary: '',
             characters: [],
             key_elements: []
         };
@@ -781,9 +1105,34 @@ class OutlineModal {
         element.contentEditable = 'true';
         element.focus();
         
+        // 获取最大长度限制
+        const maxLength = field === 'name' ? 50 : 500;
+        
+        // 实时监听输入，限制长度
+        const handleInput = (e) => {
+            const text = element.textContent;
+            if (text.length > maxLength) {
+                // 超过最大长度，截断文本
+                element.textContent = text.substring(0, maxLength);
+                
+                // 将光标移到末尾
+                const range = document.createRange();
+                const selection = window.getSelection();
+                range.selectNodeContents(element);
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        };
+        
+        element.addEventListener('input', handleInput);
+        
         element.addEventListener('blur', () => {
             element.contentEditable = 'false';
             const value = element.textContent.trim();
+            
+            // 移除输入监听
+            element.removeEventListener('input', handleInput);
             
             if (type === 'characters' && this.storyData.core_elements.characters[index]) {
                 this.storyData.core_elements.characters[index][field] = value;
@@ -805,12 +1154,60 @@ class OutlineModal {
     
     // 编辑页面字段
     editPageField(element, index, field) {
+        // 获取当前值
+        const currentValue = this.storyData.outline[index]?.[field] || '';
+        
+        // 如果是占位符文本，清空显示
+        if (!currentValue.trim()) {
+            element.textContent = '';
+            element.classList.remove('text-gray-400');
+            element.classList.add('text-gray-700');
+        }
+        
         element.contentEditable = 'true';
         element.focus();
         
+        // 页面描述最大长度
+        const maxLength = 500;
+        
+        // 清除当前页面的错误提示
+        this.clearOutlineError(index);
+        
+        // 实时监听输入，限制长度
+        const handleInput = (e) => {
+            const text = element.textContent;
+            if (text.length > maxLength) {
+                // 超过最大长度，截断文本
+                element.textContent = text.substring(0, maxLength);
+                
+                // 将光标移到末尾
+                const range = document.createRange();
+                const selection = window.getSelection();
+                range.selectNodeContents(element);
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        };
+        
+        element.addEventListener('input', handleInput);
+        
         element.addEventListener('blur', () => {
             element.contentEditable = 'false';
-            const value = element.textContent.trim();
+            let value = element.textContent.trim();
+            
+            // 移除输入监听
+            element.removeEventListener('input', handleInput);
+            
+            // 如果内容为空，恢复占位符样式
+            if (!value) {
+                element.textContent = '请输入情节内容...';
+                element.classList.remove('text-gray-700');
+                element.classList.add('text-gray-400');
+            } else {
+                element.classList.remove('text-gray-400');
+                element.classList.add('text-gray-700');
+            }
             
             if (this.storyData.outline[index]) {
                 this.storyData.outline[index][field] = value;

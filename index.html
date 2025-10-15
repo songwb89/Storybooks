@@ -220,6 +220,25 @@
         .step-pending {
             color: #6B7280;
         }
+
+        /* 输入框抖动动画 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .shake-animation {
+            animation: shake 0.3s ease-in-out;
+            border-color: #f59e0b !important; /* 琥珀色 */
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1) !important;
+        }
+
+        /* 输入框错误状态 */
+        .input-error {
+            border-color: #f59e0b !important; /* 琥珀色 */
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1) !important;
+        }
     </style>
 
 </head>
@@ -324,7 +343,18 @@
 
                     placeholder="输入您想创作的绘本故事（如：一只寻找星星的勇敢小狐狸）"
 
+                    maxlength="2000"
+
                 ></textarea>
+
+                <!-- 底部信息栏 -->
+                <div class="mt-2 px-1">
+                    <!-- 错误提示 -->
+                    <div id="storyInputError" class="text-amber-600 text-sm flex items-center gap-1 invisible">
+                        <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                        <span id="storyInputErrorText"></span>
+                    </div>
+                </div>
 
             </div>
 
@@ -517,7 +547,7 @@
 
     <!-- Toast 提示 -->
 
-    <div id="toast" class="fixed top-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl z-[100] opacity-0 transition-opacity pointer-events-none"></div>
+    <div id="toast" class="fixed top-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl z-[100] opacity-0 transition-all duration-300 pointer-events-none"></div>
 
     
 
@@ -904,23 +934,62 @@
 
 
 
+        // ========== 故事输入框校验 ==========
+        
+        // 校验故事输入框
+        function validateStoryInput(showError = true) {
+            const input = document.getElementById('storyInput');
+            const value = input.value.trim();
+            const errorDiv = document.getElementById('storyInputError');
+            const errorText = document.getElementById('storyInputErrorText');
+            
+            // 清除之前的错误状态
+            input.classList.remove('input-error', 'shake-animation');
+            errorDiv.classList.add('invisible');
+            
+            // 1. 必填校验
+            if (!value) {
+                if (showError) {
+                    errorText.textContent = '请输入故事内容';
+                    errorDiv.classList.remove('invisible');
+                    input.classList.add('input-error', 'shake-animation');
+                    input.focus();
+                    setTimeout(() => input.classList.remove('shake-animation'), 500);
+                }
+                return false;
+            }
+            
+            // 2. 最小长度校验
+            if (value.length < 5) {
+                if (showError) {
+                    errorText.textContent = '至少需要5个字符';
+                    errorDiv.classList.remove('invisible');
+                    input.classList.add('input-error');
+                }
+                return false;
+            }
+            
+            // 3. 格式校验：必须包含有效字符（中文、英文或数字）
+            if (!/[\u4e00-\u9fa5a-zA-Z0-9]/.test(value)) {
+                if (showError) {
+                    errorText.textContent = '必须包含文字或数字';
+                    errorDiv.classList.remove('invisible');
+                    input.classList.add('input-error');
+                }
+                return false;
+            }
+            
+            return true;
+        }
+        
+        
         // 生成大纲
 
         async function generateOutline() {
-
-            const storyInput = document.getElementById('storyInput').value.trim();
-
-            
-
-            if (!storyInput) {
-
-                await showAlert('请先输入故事创意！');
-
+            // 校验输入
+            if (!validateStoryInput(true)) {
                 return;
-
             }
-
-
 
             // 显示AI加载动画
             showAILoading();
@@ -1126,6 +1195,22 @@
 
         });
 
+        // 监听失焦事件，进行校验
+        document.getElementById('storyInput').addEventListener('blur', function() {
+            const value = this.value.trim();
+            // 只有在有内容时才校验（避免刚进入页面就报错）
+            if (value.length > 0) {
+                validateStoryInput(true);
+            }
+        });
+
+        // 监听获得焦点事件，清除错误提示
+        document.getElementById('storyInput').addEventListener('focus', function() {
+            const errorDiv = document.getElementById('storyInputError');
+            errorDiv.classList.add('invisible');
+            this.classList.remove('input-error');
+        });
+
 
 
         // ========== 大纲弹窗相关功能 ==========
@@ -1284,13 +1369,13 @@
 
             
 
-            // 重置类名并显示
+            // 重置类名并显示 (error用琥珀色更友好)
 
-            toast.className = `fixed top-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-2xl z-[100] transition-opacity ${
+            toast.className = `fixed top-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-2xl z-[100] transition-all duration-300 ${
 
-                type === 'error' ? 'bg-red-500' : 'bg-gray-900'
+                type === 'error' ? 'bg-amber-500' : 'bg-gray-900'
 
-            } text-white opacity-100`;
+            } text-white opacity-100 transform translate-y-0`;
 
             
 
@@ -1300,13 +1385,13 @@
 
             
 
-            // 3秒后自动隐藏
+            // 2秒后自动隐藏 (缩短时间更轻量)
 
             setTimeout(() => {
 
-                toast.classList.remove('opacity-100');
+                toast.classList.remove('opacity-100', 'translate-y-0');
 
-                toast.classList.add('opacity-0');
+                toast.classList.add('opacity-0', '-translate-y-2');
 
                 
 
@@ -1318,7 +1403,7 @@
 
                 }, 300);
 
-            }, 3000);
+            }, 2000);
 
         }
 

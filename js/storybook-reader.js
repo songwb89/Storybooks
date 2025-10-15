@@ -24,6 +24,16 @@ class StorybookReader {
         };
         this.currentVoiceType = this.loadVoicePreference(); // 当前音色类型
         
+        // 编辑模式相关
+        this.editMode = {
+            isActive: false,        // 是否开启编辑模式
+            currentEditType: null,  // 'text' | 'image' | null
+            hasUnsavedChanges: false, // 是否有未保存更改
+            originalText: '',       // 原始文字内容
+            originalImage: '',      // 原始图片URL
+            newImage: ''           // 新生成的图片URL
+        };
+        
         // 初始化语音
         this.initVoices();
     }
@@ -44,16 +54,32 @@ class StorybookReader {
     // 创建阅读器的HTML结构
     createReaderHTML() {
         const readerHTML = `
+        <style>
+            /* 输入框抖动动画 */
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-8px); }
+                75% { transform: translateX(8px); }
+            }
+
+            .shake-animation {
+                animation: shake 0.3s ease-in-out;
+                border-color: #f59e0b !important; /* 琥珀色 */
+                box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1) !important;
+            }
+        </style>
         <!-- 绘本阅读器全屏弹窗 -->
         <div id="storybookViewer" class="fixed inset-0 bg-black/90 z-[200] hidden">
             <!-- 顶部工具栏 -->
-            <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm">
-                <button onclick="window.storybookReader.close()" class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+            <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm relative">
+                <button id="closeReaderBtn" onclick="window.storybookReader.close()" class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
                     <i data-lucide="x" class="w-5 h-5"></i>
                     <span class="font-medium">关闭</span>
                 </button>
                 
-                <h2 id="storybookTitle" class="text-xl font-bold text-gray-800">绘本标题</h2>
+                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3">
+                    <h2 id="storybookTitle" class="text-xl font-bold text-gray-800 whitespace-nowrap">绘本标题</h2>
+                </div>
                 
                 <div class="flex items-center gap-3">
                     <!-- 播放/暂停按钮 -->
@@ -64,14 +90,14 @@ class StorybookReader {
                     
                     <!-- 音色选择器 -->
                     <div class="relative">
-                        <button id="voiceSelectBtn" onclick="window.storybookReader.toggleVoiceMenu()" class="flex items-center gap-1.5 px-4 py-1.5 bg-[#e8eaed] hover:bg-[#dadce0] text-[#3c4043] rounded-full text-sm font-medium transition-all shadow-sm">
+                        <button id="voiceSelectBtn" onclick="window.storybookReader.toggleVoiceMenu()" class="flex items-center gap-1.5 px-4 py-1.5 bg-[#c2e7ff] hover:bg-[#a8d8f0] text-[#001d35] rounded-full text-sm font-medium transition-all shadow-sm">
                             <i data-lucide="music" class="w-4 h-4"></i>
                             <span id="currentVoiceText">温柔女声</span>
                             <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
                         </button>
                         
                         <!-- 音色下拉菜单 -->
-                        <div id="voiceMenu" class="hidden absolute top-full mt-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-2 min-w-[180px] z-10">
+                        <div id="voiceMenu" class="hidden absolute top-full mt-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-2 min-w-[180px] z-50">
                             <button onclick="window.storybookReader.selectVoice('温柔女声')" class="voice-option w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm">
                                 <span class="text-lg">👧</span>
                                 <span>温柔女声</span>
@@ -91,34 +117,48 @@ class StorybookReader {
                         </div>
                     </div>
                     
-                    <!-- 页码 -->
-                    <div class="flex items-center gap-2 text-sm text-gray-600">
-                        <span id="currentPageNum">1</span>
-                        <span>/</span>
-                        <span id="totalPageNum">12</span>
-                    </div>
+                    <!-- 完成编辑按钮 - 只在编辑模式显示 -->
+                    <button id="finishEditBtn" onclick="window.storybookReader.toggleEditMode()" class="hidden flex items-center gap-1.5 px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-full text-sm font-medium transition-all shadow-sm">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>完成编辑</span>
+                    </button>
+                    
+                    <!-- 进入编辑模式按钮 -->
+                    <button id="enterEditModeBtn" onclick="window.storybookReader.toggleEditMode()" class="flex items-center gap-1.5 px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-all shadow-sm">
+                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                        <span>编辑</span>
+                    </button>
                 </div>
             </header>
 
             <!-- 主阅读区 -->
-            <main class="h-[calc(100vh-68px)] w-full flex items-center justify-center py-8 relative">
-                <!-- 左侧翻页按钮 - 图标尺寸64px×64px -->
-                <button id="prevPageBtn" onclick="window.storybookReader.previousPage()" class="absolute top-1/2 -translate-y-1/2 flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed z-50 group" style="left: calc(60px - 64px - 16px + 10px);">
-                    <i data-lucide="chevron-left" class="w-16 h-16 text-gray-600 transition-transform group-hover:scale-125 group-hover:text-gray-800"></i>
-                </button>
+            <main class="h-[calc(100vh-68px)] w-full flex items-center justify-center py-8 pb-20 relative overflow-hidden">
+                <!-- 动态模糊背景层 -->
+                <div id="blurredBackground" class="absolute inset-0 w-full h-full" style="
+                    background-image: url('');
+                    background-size: cover;
+                    background-position: center;
+                    filter: blur(50px) brightness(0.75);
+                    transform: scale(1.1);
+                    z-index: 0;
+                    opacity: 1;
+                    transition: opacity 0.5s ease-in-out;
+                    will-change: background-image;
+                "></div>
                 
-                <!-- 右侧翻页按钮 - 图标尺寸64px×64px -->
-                <button id="nextPageBtn" onclick="window.storybookReader.nextPage()" class="absolute top-1/2 -translate-y-1/2 flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed z-50 group" style="right: calc(60px - 16px - 64px + 10px);">
-                    <i data-lucide="chevron-right" class="w-16 h-16 text-gray-600 transition-transform group-hover:scale-125 group-hover:text-gray-800"></i>
-                </button>
-                
-                <div class="flex gap-0 w-[calc(100%-120px)] max-h-full">
+                <div class="flex gap-0 w-[calc(100%-120px)] max-h-full relative z-10">
                     <!-- 左侧图片区 - 保持图片原始比例 1472:1136 = 1.296:1 -->
                     <div id="imageContainer" class="flex-[1.296] max-h-full flex items-center justify-center bg-white rounded-l-2xl shadow-2xl overflow-hidden relative" style="aspect-ratio: 1472 / 1136; box-shadow: 
                         /* 原有外部阴影 */
                         0 25px 50px -12px rgba(0, 0, 0, 0.25),
                         /* 右侧内部阴影 - 模拟页面弯曲 */
                         inset -12px 0 15px -8px rgba(0, 0, 0, 0.25);">
+                        <!-- 编辑图片按钮 - 右上角 -->
+                        <button id="editImageBtn" onclick="window.storybookReader.startImageEdit()" class="hidden absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-2 bg-white/90 hover:bg-white text-gray-700 hover:text-orange-600 border border-gray-300 hover:border-orange-400 rounded-lg text-sm font-medium transition-all shadow-lg hover:shadow-xl">
+                            <i data-lucide="image" class="w-4 h-4"></i>
+                            <span>编辑图片</span>
+                        </button>
+                        
                         <!-- 加载动画 -->
                         <div id="imageLoader" class="absolute inset-0 flex items-center justify-center bg-gray-50">
                             <div class="flex flex-col items-center gap-3">
@@ -154,8 +194,38 @@ class StorybookReader {
                       2px 2px,
                       200px 200px,
                       300px 300px;">
+                        <!-- 编辑文字按钮 - 右上角 -->
+                        <button id="editTextBtn" onclick="window.storybookReader.startTextEdit()" class="hidden absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-2 bg-white/90 hover:bg-white text-gray-700 hover:text-blue-600 border border-gray-300 hover:border-blue-400 rounded-lg text-sm font-medium transition-all shadow-lg hover:shadow-xl">
+                            <i data-lucide="type" class="w-4 h-4"></i>
+                            <span>编辑文字</span>
+                        </button>
+                        
                         <div id="storybookText" class="text-gray-800 text-2xl leading-relaxed space-y-4">
                             故事内容将在这里显示...
+                        </div>
+                        
+                        <!-- 文字编辑状态 -->
+                        <div id="textEditMode" class="hidden absolute inset-0 bg-white z-30 flex flex-col">
+                            <!-- 顶部工具栏 -->
+                            <div class="flex items-center justify-between px-8 py-4 border-b border-gray-100">
+                                <div class="flex items-center gap-2 text-gray-400">
+                                    <i data-lucide="type" class="w-5 h-5"></i>
+                                    <span class="text-sm font-medium">编辑文本</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="window.storybookReader.cancelTextEdit()" class="px-5 py-2 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors">
+                                        取消
+                                    </button>
+                                    <button onclick="window.storybookReader.saveTextEdit()" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all shadow-sm hover:shadow">
+                                        保存
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 编辑区域 -->
+                            <div class="flex-1 overflow-hidden p-8">
+                                <textarea id="textEditArea" class="w-full h-full p-6 border border-gray-200 rounded-xl text-gray-800 text-xl leading-relaxed resize-none focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" placeholder="请输入文本内容..."></textarea>
+                            </div>
                         </div>
                         <!-- 重新开始按钮 - 只在最后一页显示 -->
                         <div id="restartButton" class="mt-8 text-center hidden">
@@ -170,7 +240,109 @@ class StorybookReader {
                         </div>
                     </div>
                 </div>
+                
+                <!-- 底部悬浮翻页控制条 -->
+                <div id="pageControlBar" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-50">
+                    <div class="flex items-center gap-4 px-6 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-lg border border-gray-200/50">
+                        <!-- 上一页按钮 -->
+                        <button id="floatingPrevBtn" onclick="window.storybookReader.previousPage()" class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-gray-100 group">
+                            <i data-lucide="chevron-left" class="w-5 h-5 transition-transform group-hover:scale-110"></i>
+                        </button>
+                        
+                        <!-- 页码显示 -->
+                        <div class="flex items-center gap-1.5 px-4 select-none">
+                            <span class="text-sm font-medium text-gray-700">
+                                <span id="floatingCurrentPage">1</span>
+                                <span class="text-gray-400 mx-1">/</span>
+                                <span id="floatingTotalPages" class="text-gray-500">12</span>
+                            </span>
+                        </div>
+                        
+                        <!-- 下一页按钮 -->
+                        <button id="floatingNextBtn" onclick="window.storybookReader.nextPage()" class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-gray-100 group">
+                            <i data-lucide="chevron-right" class="w-5 h-5 transition-transform group-hover:scale-110"></i>
+                        </button>
+                    </div>
+                </div>
             </main>
+            
+            <!-- 图片编辑对话框 -->
+            <div id="imageEditModal" class="hidden fixed inset-0 z-[250] flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.4);">
+                <!-- 模糊背景层 -->
+                <div id="imageEditModalBackdrop" class="absolute inset-0 bg-cover bg-center" style="background-image: url(''); filter: blur(40px); opacity: 0.7;"></div>
+                <div class="bg-white rounded-3xl shadow-2xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col relative z-10">
+                    <!-- 标题栏 -->
+                    <div class="px-8 py-5 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100 flex items-center justify-between">
+                        <h3 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">重新生成图片</h3>
+                        <button onclick="window.storybookReader.closeImageEditModal()" class="w-9 h-9 rounded-full bg-white/80 hover:bg-white shadow-sm hover:shadow flex items-center justify-center transition-all hover:scale-105">
+                            <i data-lucide="x" class="w-5 h-5 text-gray-600"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- 内容区 -->
+                    <div class="flex-1 overflow-y-auto p-8">
+                        <!-- 图片对比区 -->
+                        <div id="imageComparisonSection" class="hidden mb-8">
+                            <div class="grid grid-cols-2 gap-8">
+                                <div>
+                                    <div class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full bg-gray-400"></div>
+                                        原始图片
+                                    </div>
+                                    <div class="aspect-[1472/1136] bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl overflow-hidden shadow-md border border-gray-200">
+                                        <img id="originalImagePreview" src="" alt="原始图片" class="w-full h-full object-cover">
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+                                        新生成图片
+                                    </div>
+                                    <div class="aspect-[1472/1136] bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl overflow-hidden relative shadow-md border border-indigo-200">
+                                        <img id="newImagePreview" src="" alt="新生成图片" class="w-full h-full object-cover">
+                                        <!-- 生成中遮罩 -->
+                                        <div id="imageGenerating" class="hidden absolute inset-0 bg-white/95 flex items-center justify-center backdrop-blur-sm">
+                                            <div class="flex flex-col items-center gap-4">
+                                                <div class="w-14 h-14 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+                                                <span class="text-base font-medium text-gray-700">AI正在生成图片...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 输入区 -->
+                        <div id="imagePromptSection">
+                            <label class="block text-base font-semibold text-gray-800 mb-3">
+                                请描述您希望如何修改这张图片
+                            </label>
+                            <textarea id="imagePromptInput" class="w-full h-36 px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none resize-none text-gray-800 text-base transition-all" placeholder="例如：让背景更加明亮，角色表情更加开心"></textarea>
+                            <div class="mt-3 text-sm text-gray-500 flex items-center gap-2">
+                                <i data-lucide="lightbulb" class="w-4 h-4 text-yellow-500"></i>
+                                <span>提示：描述越详细，生成效果越好</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 底部按钮 -->
+                    <div class="px-8 py-5 bg-gray-50 border-t border-gray-200 flex justify-end items-center">
+                        <div class="flex gap-3">
+                            <button id="rejectNewImageBtn" onclick="window.storybookReader.rejectNewImage()" class="hidden px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 rounded-xl font-medium transition-all shadow-sm hover:shadow border border-gray-300">
+                                重新生成
+                            </button>
+                            <button id="generateImageBtn" onclick="window.storybookReader.generateNewImage()" class="px-8 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 flex items-center gap-2">
+                                <i data-lucide="wand-2" class="w-4 h-4"></i>
+                                <span>开始生成</span>
+                            </button>
+                            <button id="acceptNewImageBtn" onclick="window.storybookReader.acceptNewImage()" class="hidden px-8 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4"></i>
+                                <span>采用新图</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         `;
 
@@ -197,7 +369,7 @@ class StorybookReader {
         
         // 设置标题和总页数
         document.getElementById('storybookTitle').textContent = bookData.title;
-        document.getElementById('totalPageNum').textContent = bookData.pages.length;
+        document.getElementById('floatingTotalPages').textContent = bookData.pages.length;
         
         // 更新音色显示（从localStorage加载）
         const currentVoiceText = document.getElementById('currentVoiceText');
@@ -254,6 +426,7 @@ class StorybookReader {
         const imageContainer = document.getElementById('imageContainer');
         const textContainer = document.getElementById('textContainer');
         const imageLoader = document.getElementById('imageLoader');
+        const blurredBg = document.getElementById('blurredBackground');
         
         // 步骤1: 淡出当前内容
         imageEl.style.opacity = '0';
@@ -266,8 +439,8 @@ class StorybookReader {
         
         // 更新页码显示
         this.currentPage = pageNum;
-        document.getElementById('currentPageNum').textContent = pageNum;
         document.getElementById('pageNumberDisplay').textContent = pageNum;
+        document.getElementById('floatingCurrentPage').textContent = pageNum;
         
         // 更新按钮状态
         this.updateNavigationButtons();
@@ -293,6 +466,20 @@ class StorybookReader {
         try {
             await this.preloadImage(page.image);
             imageEl.src = page.image;
+            
+            // 更新模糊背景 - 使用淡入淡出效果
+            if (blurredBg) {
+                // 淡出旧背景
+                blurredBg.style.opacity = '0';
+                await new Promise(resolve => setTimeout(resolve, 250));
+                
+                // 更换背景图片
+                blurredBg.style.backgroundImage = `url('${page.image}')`;
+                
+                // 淡入新背景
+                await new Promise(resolve => setTimeout(resolve, 50));
+                blurredBg.style.opacity = '1';
+            }
         } catch (error) {
             console.warn('图片加载失败:', page.image);
             imageEl.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4=';
@@ -341,11 +528,11 @@ class StorybookReader {
     updateNavigationButtons() {
         if (!this.currentBookData) return;
         
-        const prevBtn = document.getElementById('prevPageBtn');
-        const nextBtn = document.getElementById('nextPageBtn');
+        const floatingPrevBtn = document.getElementById('floatingPrevBtn');
+        const floatingNextBtn = document.getElementById('floatingNextBtn');
         
-        prevBtn.disabled = this.currentPage === 1;
-        nextBtn.disabled = this.currentPage === this.currentBookData.pages.length;
+        floatingPrevBtn.disabled = this.currentPage === 1;
+        floatingNextBtn.disabled = this.currentPage === this.currentBookData.pages.length;
     }
 
     // 预加载图片
@@ -363,15 +550,40 @@ class StorybookReader {
         document.addEventListener('keydown', (e) => {
             const viewer = document.getElementById('storybookViewer');
             if (viewer && !viewer.classList.contains('hidden')) {
-                if (e.key === 'ArrowLeft') {
+                // 如果在文字编辑状态，只处理ESC键
+                if (this.editMode.currentEditType === 'text') {
+                    if (e.key === 'Escape') {
+                        this.cancelTextEdit();
+                    }
+                    return;
+                }
+
+                // 如果在图片编辑对话框，只处理ESC键
+                const imageModal = document.getElementById('imageEditModal');
+                if (imageModal && !imageModal.classList.contains('hidden')) {
+                    if (e.key === 'Escape') {
+                        this.closeImageEditModal();
+                    }
+                    return;
+                }
+
+                // 正常阅读模式的快捷键
+                if (e.key === 'ArrowLeft' && !this.editMode.isActive) {
                     this.previousPage();
-                } else if (e.key === 'ArrowRight') {
+                } else if (e.key === 'ArrowRight' && !this.editMode.isActive) {
                     this.nextPage();
                 } else if (e.key === 'Escape') {
-                    this.close();
-                } else if (e.key === ' ') {
+                    if (this.editMode.isActive) {
+                        this.toggleEditMode();
+                    } else {
+                        this.close();
+                    }
+                } else if (e.key === ' ' && !this.editMode.isActive) {
                     e.preventDefault();
                     this.togglePlay();
+                } else if (e.key === 'e' || e.key === 'E') {
+                    e.preventDefault();
+                    this.toggleEditMode();
                 }
             }
         });
@@ -586,6 +798,308 @@ class StorybookReader {
         if (this.isPlaying) {
             this.play();
         }
+    }
+
+    // ========== 编辑模式相关方法 ==========
+
+    // 切换编辑模式
+    toggleEditMode() {
+        this.editMode.isActive = !this.editMode.isActive;
+        this.updateEditModeUI();
+    }
+
+    // 更新编辑模式UI
+    updateEditModeUI() {
+        const closeReaderBtn = document.getElementById('closeReaderBtn');
+        const enterEditModeBtn = document.getElementById('enterEditModeBtn');
+        const finishEditBtn = document.getElementById('finishEditBtn');
+        const editTextBtn = document.getElementById('editTextBtn');
+        const editImageBtn = document.getElementById('editImageBtn');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const voiceSelectBtn = document.getElementById('voiceSelectBtn');
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+
+        if (this.editMode.isActive) {
+            // 进入编辑模式
+            // 显示完成按钮和页面上的编辑按钮
+            finishEditBtn.classList.remove('hidden');
+            enterEditModeBtn.classList.add('hidden');
+            editTextBtn.classList.remove('hidden');
+            editImageBtn.classList.remove('hidden');
+            
+            // 禁用关闭按钮、播放和翻页
+            closeReaderBtn.disabled = true;
+            closeReaderBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            if (this.isPlaying) {
+                this.pause();
+            }
+            playPauseBtn.disabled = true;
+            playPauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            voiceSelectBtn.disabled = true;
+            voiceSelectBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+        } else {
+            // 退出编辑模式
+            // 隐藏完成按钮和页面上的编辑按钮
+            finishEditBtn.classList.add('hidden');
+            enterEditModeBtn.classList.remove('hidden');
+            editTextBtn.classList.add('hidden');
+            editImageBtn.classList.add('hidden');
+            
+            // 恢复关闭按钮、播放和翻页
+            closeReaderBtn.disabled = false;
+            closeReaderBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            playPauseBtn.disabled = false;
+            playPauseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            voiceSelectBtn.disabled = false;
+            voiceSelectBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            this.updateNavigationButtons();
+        }
+
+        // 重新创建图标
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    // ========== 文字编辑相关方法 ==========
+
+    // 开始文字编辑
+    startTextEdit() {
+        if (!this.editMode.isActive) return;
+
+        const page = this.currentBookData.pages[this.currentPage - 1];
+        if (!page) return;
+
+        this.editMode.currentEditType = 'text';
+        
+        // 保存原始文字
+        const textEl = document.createElement('div');
+        textEl.innerHTML = page.text;
+        this.editMode.originalText = textEl.textContent || textEl.innerText;
+
+        // 显示编辑界面
+        const textEditMode = document.getElementById('textEditMode');
+        const textEditArea = document.getElementById('textEditArea');
+
+        textEditMode.classList.remove('hidden');
+        textEditArea.value = this.editMode.originalText;
+        textEditArea.focus();
+
+        // 重新创建图标
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    // 取消文字编辑
+    cancelTextEdit() {
+        const textEditMode = document.getElementById('textEditMode');
+        textEditMode.classList.add('hidden');
+        this.editMode.currentEditType = null;
+    }
+
+    // 保存文字编辑
+    saveTextEdit() {
+        const textEditArea = document.getElementById('textEditArea');
+        const newText = textEditArea.value.trim();
+
+        if (!newText) {
+            // 聚焦到输入框并轻微抖动
+            textEditArea.focus();
+            textEditArea.classList.add('shake-animation');
+            setTimeout(() => textEditArea.classList.remove('shake-animation'), 500);
+            return;
+        }
+
+        // 更新页面数据
+        const page = this.currentBookData.pages[this.currentPage - 1];
+        if (page) {
+            page.text = newText;
+            
+            // 更新显示
+            const storybookText = document.getElementById('storybookText');
+            storybookText.textContent = newText;
+
+            // 标记有未保存的更改
+            this.editMode.hasUnsavedChanges = true;
+
+            // 关闭编辑界面
+            this.cancelTextEdit();
+
+            // 显示成功提示
+            this.showToast('文字已保存');
+
+            // TODO: 这里应该调用API保存到后端
+            console.log('保存文字到后端:', {
+                pageNumber: this.currentPage,
+                text: newText
+            });
+        }
+    }
+
+    // ========== 图片编辑相关方法 ==========
+
+    // 开始图片编辑
+    startImageEdit() {
+        if (!this.editMode.isActive) return;
+
+        const page = this.currentBookData.pages[this.currentPage - 1];
+        if (!page) return;
+
+        this.editMode.currentEditType = 'image';
+        this.editMode.originalImage = page.image;
+
+        // 显示图片编辑对话框
+        const modal = document.getElementById('imageEditModal');
+        const modalBackdrop = document.getElementById('imageEditModalBackdrop');
+        const originalPreview = document.getElementById('originalImagePreview');
+        const imagePromptInput = document.getElementById('imagePromptInput');
+        const imageComparisonSection = document.getElementById('imageComparisonSection');
+        const imagePromptSection = document.getElementById('imagePromptSection');
+        const generateBtn = document.getElementById('generateImageBtn');
+        const acceptBtn = document.getElementById('acceptNewImageBtn');
+        const rejectBtn = document.getElementById('rejectNewImageBtn');
+
+        // 重置状态
+        originalPreview.src = page.image;
+        imagePromptInput.value = '';
+        imageComparisonSection.classList.add('hidden');
+        imagePromptSection.classList.remove('hidden');
+        generateBtn.classList.remove('hidden');
+        acceptBtn.classList.add('hidden');
+        rejectBtn.classList.add('hidden');
+
+        // 设置模糊背景为当前图片
+        if (modalBackdrop) {
+            modalBackdrop.style.backgroundImage = `url('${page.image}')`;
+        }
+
+        modal.classList.remove('hidden');
+
+        // 重新创建图标
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    // 关闭图片编辑对话框
+    closeImageEditModal() {
+        const modal = document.getElementById('imageEditModal');
+        modal.classList.add('hidden');
+        this.editMode.currentEditType = null;
+        this.editMode.newImage = '';
+    }
+
+    // 生成新图片
+    async generateNewImage() {
+        const promptInput = document.getElementById('imagePromptInput');
+        const prompt = promptInput.value.trim();
+
+        if (!prompt) {
+            // 聚焦到输入框并轻微抖动
+            promptInput.focus();
+            promptInput.classList.add('shake-animation');
+            setTimeout(() => promptInput.classList.remove('shake-animation'), 500);
+            return;
+        }
+
+        // 显示对比区域和加载状态
+        const imageComparisonSection = document.getElementById('imageComparisonSection');
+        const imagePromptSection = document.getElementById('imagePromptSection');
+        const imageGenerating = document.getElementById('imageGenerating');
+        const generateBtn = document.getElementById('generateImageBtn');
+        const acceptBtn = document.getElementById('acceptNewImageBtn');
+        const rejectBtn = document.getElementById('rejectNewImageBtn');
+
+        imageComparisonSection.classList.remove('hidden');
+        imagePromptSection.classList.add('hidden');
+        imageGenerating.classList.remove('hidden');
+        generateBtn.classList.add('hidden');
+
+        // 模拟图片生成（实际应该调用后端API）
+        console.log('调用图生图API:', {
+            originalImage: this.editMode.originalImage,
+            prompt: prompt,
+            pageNumber: this.currentPage
+        });
+
+        // 模拟3秒生成时间
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        // 模拟生成结果（使用原图作为演示）
+        // 实际应该使用API返回的新图片URL
+        const newImagePreview = document.getElementById('newImagePreview');
+        this.editMode.newImage = this.editMode.originalImage; // 演示用，实际应该是新生成的图片
+        newImagePreview.src = this.editMode.newImage;
+
+        // 隐藏加载状态，显示操作按钮
+        imageGenerating.classList.add('hidden');
+        acceptBtn.classList.remove('hidden');
+        rejectBtn.classList.remove('hidden');
+
+        // 重新创建图标
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    // 采用新图片
+    acceptNewImage() {
+        // 原型模式：只关闭对话框，不实际替换图片
+        this.closeImageEditModal();
+        
+        // 显示成功提示
+        this.showToast('图片已采用（原型模式）');
+        
+        // TODO: 实际项目中，这里应该：
+        // 1. 更新页面数据
+        // 2. 更新显示的图片
+        // 3. 调用API保存到后端
+        console.log('原型模式：采用新图片', {
+            pageNumber: this.currentPage,
+            originalImage: this.editMode.originalImage,
+            newImage: this.editMode.newImage
+        });
+    }
+
+    // 放弃新图片
+    rejectNewImage() {
+        // 重置到输入状态
+        const imageComparisonSection = document.getElementById('imageComparisonSection');
+        const imagePromptSection = document.getElementById('imagePromptSection');
+        const generateBtn = document.getElementById('generateImageBtn');
+        const acceptBtn = document.getElementById('acceptNewImageBtn');
+        const rejectBtn = document.getElementById('rejectNewImageBtn');
+
+        imageComparisonSection.classList.add('hidden');
+        imagePromptSection.classList.remove('hidden');
+        generateBtn.classList.remove('hidden');
+        acceptBtn.classList.add('hidden');
+        rejectBtn.classList.add('hidden');
+
+        this.editMode.newImage = '';
+    }
+
+    // 显示提示消息
+    showToast(message) {
+        // 创建临时提示元素
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl z-[300] transition-opacity';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        // 3秒后移除
+        setTimeout(() => {
+            toast.classList.add('opacity-0');
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 300);
+        }, 3000);
     }
 }
 

@@ -164,13 +164,7 @@ class GenerationProgress {
      */
     async cancel() {
         // 使用自定义确认对话框
-        let confirmed = false;
-        if (typeof showConfirm === 'function') {
-            confirmed = await showConfirm('确定要取消生成吗？', '取消确认', '确定');
-        } else {
-            // 降级到原生 confirm（如果自定义函数不可用）
-            confirmed = confirm('确定要取消生成吗？');
-        }
+        const confirmed = await showConfirm('确定要取消生成吗？', '取消确认', '确定');
         
         if (confirmed) {
             this.isGenerating = false;

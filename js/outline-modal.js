@@ -1079,6 +1079,12 @@ class OutlineModal {
     deletePage(index) {
         if (this.storyData.outline) {
             this.storyData.outline.splice(index, 1);
+            
+            // 重新编号
+            this.storyData.outline.forEach((page, idx) => {
+                page.page_number = idx + 1;
+            });
+            
             this.renderOutline();
             this.updatePageCount();
         }

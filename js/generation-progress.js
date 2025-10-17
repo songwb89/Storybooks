@@ -68,8 +68,8 @@ class GenerationProgress {
                                     <i id="gp-step3-icon" data-lucide="clock" class="w-5 h-5 text-gray-500"></i>
                                 </div>
                                 <div class="flex-1">
-                                    <div class="font-medium text-gray-700 mb-1">设计页面布局</div>
-                                    <p id="gp-step3-detail" class="text-sm text-gray-500">等待页面布局设计...</p>
+                                    <div class="font-medium text-gray-700 mb-1">优化画面描述</div>
+                                    <p id="gp-step3-detail" class="text-sm text-gray-500">等待优化故事画面描述...</p>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <span id="gp-step3-status" class="text-sm font-medium text-gray-500 px-3 py-1 bg-gray-200 rounded-full">等待中</span>
@@ -217,9 +217,9 @@ class GenerationProgress {
                 completed: '已编写完整的故事脚本'
             },
             3: {
-                pending: '等待页面布局设计...',
-                active: '正在设计页面布局...',
-                completed: '已完成页面布局设计'
+                pending: '等待优化故事画面描述...',
+                active: '正在为每个场景优化画面描述...',
+                completed: '已完成画面描述优化'
             },
             4: {
                 pending: '等待AI绘制精美插图...',

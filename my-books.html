@@ -446,6 +446,17 @@
                 pages: 6,
                 progress: 100
             },
+            // 第5本 - 异常状态：已取消
+            {
+                id: 14,
+                title: "星空下的梦想",
+                status: "cancelled",
+                createdAt: "2024-01-02",
+                updatedAt: "2024-01-02",
+                coverImage: null,
+                pages: 0,
+                progress: 0
+            },
             {
                 id: 5,
                 title: "海的女儿",
@@ -508,7 +519,7 @@
             },
             // 第14-23本 - 已完成（第二轮重复10本）
             {
-                id: 14,
+                id: 24,
                 title: "丑小鸭的春天",
                 status: "completed",
                 createdAt: "2024-01-15",
@@ -518,7 +529,7 @@
                 progress: 100
             },
             {
-                id: 15,
+                id: 25,
                 title: "亡羊补牢",
                 status: "completed",
                 createdAt: "2024-01-14",
@@ -528,7 +539,7 @@
                 progress: 100
             },
             {
-                id: 16,
+                id: 26,
                 title: "卖火柴的小女孩",
                 status: "completed",
                 createdAt: "2024-01-13",
@@ -538,7 +549,7 @@
                 progress: 100
             },
             {
-                id: 17,
+                id: 27,
                 title: "守株待兔",
                 status: "completed",
                 createdAt: "2024-01-12",
@@ -548,7 +559,7 @@
                 progress: 100
             },
             {
-                id: 18,
+                id: 28,
                 title: "海的女儿",
                 status: "completed",
                 createdAt: "2024-01-11",
@@ -558,7 +569,7 @@
                 progress: 100
             },
             {
-                id: 19,
+                id: 29,
                 title: "灰姑娘",
                 status: "completed",
                 createdAt: "2024-01-10",
@@ -568,7 +579,7 @@
                 progress: 100
             },
             {
-                id: 20,
+                id: 30,
                 title: "狐假虎威",
                 status: "completed",
                 createdAt: "2024-01-09",
@@ -578,7 +589,7 @@
                 progress: 100
             },
             {
-                id: 21,
+                id: 31,
                 title: "狼来了",
                 status: "completed",
                 createdAt: "2024-01-08",
@@ -588,7 +599,7 @@
                 progress: 100
             },
             {
-                id: 22,
+                id: 32,
                 title: "青蛙王子",
                 status: "completed",
                 createdAt: "2024-01-07",
@@ -598,7 +609,7 @@
                 progress: 100
             },
             {
-                id: 23,
+                id: 33,
                 title: "龟兔赛跑",
                 status: "completed",
                 createdAt: "2024-01-06",
@@ -741,6 +752,7 @@
                     break;
                 case 'draft':
                 case 'failed':
+                case 'cancelled':
                     clickHandler = `onclick="openOutlineConfirm(${book.id})"`;
                     break;
                 case 'generating':
@@ -831,6 +843,11 @@
                     text: '生成失败',
                     badgeClass: 'bg-red-100 text-red-800',
                     icon: 'alert-circle'
+                },
+                cancelled: {
+                    text: '已取消',
+                    badgeClass: 'bg-gray-100 text-gray-800',
+                    icon: 'x-circle'
                 }
             };
             return configs[status] || configs.draft;
@@ -842,7 +859,8 @@
                 draft: 'file-text',
                 generating: 'loader-2',
                 completed: 'book-open',
-                failed: 'alert-triangle'
+                failed: 'alert-triangle',
+                cancelled: 'ban'
             };
             return icons[status] || 'book-open';
         }
@@ -863,12 +881,7 @@
                     break;
 
                 case 'draft':
-                    menuItems.push(`
-                        <button onclick="event.stopPropagation(); editDraft(${book.id})" class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
-                            <i data-lucide="edit-3" class="w-3 h-3"></i>
-                            编辑大纲
-                        </button>
-                    `);
+                    // 草稿状态不显示编辑大纲按钮，只保留删除按钮
                     break;
 
                 case 'generating':
@@ -881,6 +894,7 @@
                     break;
 
                 case 'failed':
+                case 'cancelled':
                     menuItems.push(`
                         <button onclick="event.stopPropagation(); retryGenerateBook(${book.id})" class="w-full px-3 py-2 text-left text-sm text-primary-600 hover:bg-primary-50 transition-colors flex items-center gap-2">
                             <i data-lucide="refresh-cw" class="w-3 h-3"></i>
@@ -1134,6 +1148,7 @@
                     `;
                     break;
                 case 'failed':
+                case 'cancelled':
                     buttons = `
                         <button onclick="retryGeneration(${book.id})" class="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-all">
                             <i data-lucide="refresh-cw" class="w-4 h-4 inline mr-2"></i>
@@ -1161,7 +1176,7 @@
         // 各种操作函数
         function createNewBook() {
             showToast('跳转到创建新绘本页面');
-            // window.location.href = 'index.html';
+            window.location.href = 'home.html';
         }
 
         function editDraft(bookId) {

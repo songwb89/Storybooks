@@ -117,10 +117,10 @@ class StorybookReader {
                         </div>
                     </div>
                     
-                    <!-- 完成编辑按钮 - 只在编辑模式显示 -->
+                    <!-- 退出编辑按钮 - 只在编辑模式显示 -->
                     <button id="finishEditBtn" onclick="window.storybookReader.toggleEditMode()" class="hidden flex items-center gap-1.5 px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-full text-sm font-medium transition-all shadow-sm">
                         <i data-lucide="check" class="w-4 h-4"></i>
-                        <span>完成编辑</span>
+                        <span>退出编辑</span>
                     </button>
                     
                     <!-- 进入编辑模式按钮 -->
@@ -819,6 +819,8 @@ class StorybookReader {
         const voiceSelectBtn = document.getElementById('voiceSelectBtn');
         const prevBtn = document.getElementById('prevPageBtn');
         const nextBtn = document.getElementById('nextPageBtn');
+        const floatingPrevBtn = document.getElementById('floatingPrevBtn');
+        const floatingNextBtn = document.getElementById('floatingNextBtn');
 
         if (this.editMode.isActive) {
             // 进入编辑模式
@@ -841,6 +843,14 @@ class StorybookReader {
             voiceSelectBtn.classList.add('opacity-50', 'cursor-not-allowed');
             prevBtn.disabled = true;
             nextBtn.disabled = true;
+            
+            // 禁用浮动翻页按钮
+            if (floatingPrevBtn) {
+                floatingPrevBtn.disabled = true;
+            }
+            if (floatingNextBtn) {
+                floatingNextBtn.disabled = true;
+            }
         } else {
             // 退出编辑模式
             // 隐藏完成按钮和页面上的编辑按钮
@@ -890,6 +900,12 @@ class StorybookReader {
         textEditArea.value = this.editMode.originalText;
         textEditArea.focus();
 
+        // 禁用浮动翻页按钮
+        const floatingPrevBtn = document.getElementById('floatingPrevBtn');
+        const floatingNextBtn = document.getElementById('floatingNextBtn');
+        if (floatingPrevBtn) floatingPrevBtn.disabled = true;
+        if (floatingNextBtn) floatingNextBtn.disabled = true;
+
         // 重新创建图标
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
@@ -901,6 +917,9 @@ class StorybookReader {
         const textEditMode = document.getElementById('textEditMode');
         textEditMode.classList.add('hidden');
         this.editMode.currentEditType = null;
+
+        // 激活浮动翻页按钮（用户已完成当前编辑操作）
+        this.updateNavigationButtons();
     }
 
     // 保存文字编辑
@@ -932,7 +951,7 @@ class StorybookReader {
             this.cancelTextEdit();
 
             // 显示成功提示
-            this.showToast('文字已保存');
+            this.showToast('文字已保存', 'success');
 
             // TODO: 这里应该调用API保存到后端
             console.log('保存文字到后端:', {
@@ -981,6 +1000,12 @@ class StorybookReader {
 
         modal.classList.remove('hidden');
 
+        // 禁用浮动翻页按钮
+        const floatingPrevBtn = document.getElementById('floatingPrevBtn');
+        const floatingNextBtn = document.getElementById('floatingNextBtn');
+        if (floatingPrevBtn) floatingPrevBtn.disabled = true;
+        if (floatingNextBtn) floatingNextBtn.disabled = true;
+
         // 重新创建图标
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
@@ -993,6 +1018,9 @@ class StorybookReader {
         modal.classList.add('hidden');
         this.editMode.currentEditType = null;
         this.editMode.newImage = '';
+
+        // 激活浮动翻页按钮（用户已完成当前编辑操作）
+        this.updateNavigationButtons();
     }
 
     // 生成新图片
@@ -1054,7 +1082,7 @@ class StorybookReader {
         this.closeImageEditModal();
         
         // 显示成功提示
-        this.showToast('图片已采用（原型模式）');
+        this.showToast('图片已采用（原型模式）', 'success');
         
         // TODO: 实际项目中，这里应该：
         // 1. 更新页面数据
@@ -1086,18 +1114,50 @@ class StorybookReader {
     }
 
     // 显示提示消息
-    showToast(message) {
-        // 创建临时提示元素
+    showToast(message, type = 'success') {
+        // 如果页面有全局 showToast 函数，使用全局的
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, type);
+            return;
+        }
+
+        // 否则创建临时提示元素
         const toast = document.createElement('div');
-        toast.className = 'fixed top-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl z-[300] transition-opacity';
-        toast.textContent = message;
+        
+        // 根据类型设置图标和背景色
+        let bgColor = 'bg-green-500'; // 默认成功是绿色
+        let iconName = 'check-circle';
+        
+        if (type === 'error') {
+            bgColor = 'bg-amber-500';
+            iconName = 'alert-circle';
+        } else if (type === 'info') {
+            bgColor = 'bg-blue-500';
+            iconName = 'info';
+        } else if (type === 'warning') {
+            bgColor = 'bg-amber-500';
+            iconName = 'alert-triangle';
+        }
+        
+        toast.className = `fixed top-20 left-1/2 -translate-x-1/2 ${bgColor} text-white px-6 py-3 rounded-xl shadow-2xl z-[300] transition-all duration-300 opacity-100 flex items-center gap-3`;
+        toast.innerHTML = `
+            <i data-lucide="${iconName}" class="w-5 h-5"></i>
+            <span>${message}</span>
+        `;
         document.body.appendChild(toast);
+        
+        // 初始化图标
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
 
         // 3秒后移除
         setTimeout(() => {
-            toast.classList.add('opacity-0');
+            toast.classList.add('opacity-0', '-translate-y-2');
             setTimeout(() => {
-                document.body.removeChild(toast);
+                if (toast.parentNode) {
+                    document.body.removeChild(toast);
+                }
             }, 300);
         }, 3000);
     }

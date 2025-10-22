@@ -536,7 +536,7 @@ class OutlineModal {
         
         // 显示保存成功提示
         if (typeof showToast === 'function') {
-            showToast('草稿已保存');
+            showToast('草稿已保存', 'success');
         }
         
         // 保存后直接关闭窗口，不弹出确认对话框
@@ -615,7 +615,7 @@ class OutlineModal {
             
             // 全局提示
             if (typeof showToast === 'function') {
-                showToast(`发现 ${errorCount} 个错误需要修正，请检查提示信息`, 'warning');
+                showToast(`发现 ${errorCount} 个错误需要修正，请检查提示信息`, 'error');
             }
             
             return; // 中止生成
@@ -1006,7 +1006,7 @@ class OutlineModal {
         this.updatePageCount();
         
         if (typeof showToast === 'function') {
-            showToast('已插入新页');
+            showToast('已插入新页', 'success');
         }
     }
     
@@ -1039,7 +1039,7 @@ class OutlineModal {
         this.updatePageCount();
         
         if (typeof showToast === 'function') {
-            showToast('已添加新页');
+            showToast('已添加新页', 'success');
         }
     }
     
@@ -1295,7 +1295,7 @@ class OutlineModal {
         
         // 显示选择成功提示
         if (typeof showToast === 'function') {
-            showToast(`已选择 ${styleText}`);
+            showToast(`已选择 ${styleText}`, 'success');
         }
     }
     

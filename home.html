@@ -1511,32 +1511,29 @@
             // 第1步：分析故事大纲 (3秒)
             setTimeout(() => {
                 if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
+                generationProgress.completeStep(1);
                 generationProgress.setCurrentStep(2);
 
                 // 第2步：生成故事脚本 (5秒)
                 setTimeout(() => {
                     if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
+                    generationProgress.completeStep(2);
                     generationProgress.setCurrentStep(3);
 
-                    // 第3步：设计页面布局 (3秒)
+                    // 第3步：生成插图 (7秒)
                     setTimeout(() => {
                         if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
-                        generationProgress.setCurrentStep(4);
-
-                        // 第4步：生成插图 (4秒)
-                        setTimeout(() => {
-                            if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
-                            
-                            // 生成完成
-                            generationProgress.complete(() => {
-                                showToast('✅ 绘本生成完成！', 'success');
-                                // 自动打开绘本查看窗口
-                                setTimeout(() => {
-                                    window.storybookReader.open(window.defaultStorybookData);
-                                }, 500);
-                            });
-                        }, 4000);
-                    }, 3000);
+                        generationProgress.completeStep(3);
+                        
+                        // 生成完成
+                        generationProgress.complete(() => {
+                            showToast('✅ 绘本生成完成！', 'success');
+                            // 自动打开绘本查看窗口
+                            setTimeout(() => {
+                                window.storybookReader.open(window.defaultStorybookData);
+                            }, 500);
+                        });
+                    }, 7000);
                 }, 5000);
             }, 3000);
         }

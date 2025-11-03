@@ -1,6 +1,6 @@
 /**
  * 生成绘本进度窗口组件
- * 用于显示绘本生成的实时进度（4个步骤）
+ * 用于显示绘本生成的实时进度（3个步骤）
  * 可在 index.html 和 my-books.html 中复用
  */
 class GenerationProgress {
@@ -62,31 +62,17 @@ class GenerationProgress {
                                 </div>
                             </div>
 
-                            <!-- 步骤3 -->
+                            <!-- 步骤4 -->
                             <div class="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 transition-all duration-300" id="gp-step3">
                                 <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
                                     <i id="gp-step3-icon" data-lucide="clock" class="w-5 h-5 text-gray-500"></i>
                                 </div>
                                 <div class="flex-1">
-                                    <div class="font-medium text-gray-700 mb-1">优化画面描述</div>
-                                    <p id="gp-step3-detail" class="text-sm text-gray-500">等待优化故事画面描述...</p>
+                                    <div class="font-medium text-gray-700 mb-1">生成插图</div>
+                                    <p id="gp-step3-detail" class="text-sm text-gray-500">等待AI绘制精美插图...</p>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <span id="gp-step3-status" class="text-sm font-medium text-gray-500 px-3 py-1 bg-gray-200 rounded-full">等待中</span>
-                                </div>
-                            </div>
-
-                            <!-- 步骤4 -->
-                            <div class="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 transition-all duration-300" id="gp-step4">
-                                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                    <i id="gp-step4-icon" data-lucide="clock" class="w-5 h-5 text-gray-500"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <div class="font-medium text-gray-700 mb-1">生成插图</div>
-                                    <p id="gp-step4-detail" class="text-sm text-gray-500">等待AI绘制精美插图...</p>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <span id="gp-step4-status" class="text-sm font-medium text-gray-500 px-3 py-1 bg-gray-200 rounded-full">等待中</span>
                                 </div>
                             </div>
                         </div>
@@ -217,11 +203,6 @@ class GenerationProgress {
                 completed: '已编写完整的故事脚本'
             },
             3: {
-                pending: '等待优化故事画面描述...',
-                active: '正在为每个场景优化画面描述...',
-                completed: '已完成画面描述优化'
-            },
-            4: {
                 pending: '等待AI绘制精美插图...',
                 active: '正在生成精美插图...',
                 completed: '已生成所有插图'
@@ -269,12 +250,12 @@ class GenerationProgress {
      */
     updateProgressDisplay() {
         // 重置所有步骤为 pending 状态
-        for (let i = 1; i <= 4; i++) {
+        for (let i = 1; i <= 3; i++) {
             this.updateStep(i, 'pending');
         }
 
         // 设置当前步骤为 active
-        if (this.currentStep >= 1 && this.currentStep <= 4) {
+        if (this.currentStep >= 1 && this.currentStep <= 3) {
             this.updateStep(this.currentStep, 'active');
         }
 
@@ -286,7 +267,7 @@ class GenerationProgress {
 
     /**
      * 设置当前步骤并更新显示
-     * @param {number} step - 步骤编号（1-4）
+     * @param {number} step - 步骤编号（1-3）
      */
     setCurrentStep(step) {
         this.currentStep = step;
@@ -295,7 +276,7 @@ class GenerationProgress {
 
     /**
      * 完成某个步骤
-     * @param {number} step - 步骤编号（1-4）
+     * @param {number} step - 步骤编号（1-3）
      */
     completeStep(step) {
         this.updateStep(step, 'completed');
@@ -307,7 +288,7 @@ class GenerationProgress {
      */
     complete(callback) {
         // 标记所有步骤为完成
-        for (let i = 1; i <= 4; i++) {
+        for (let i = 1; i <= 3; i++) {
             this.updateStep(i, 'completed');
         }
 

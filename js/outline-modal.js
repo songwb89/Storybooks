@@ -689,6 +689,9 @@ class OutlineModal {
         
         const characters = this.storyData.core_elements.characters || [];
         
+        // 更新添加按钮状态
+        this.updateAddButtonState('character', characters.length);
+        
         if (characters.length === 0) {
             container.innerHTML = '<div class="text-center py-6 text-sm text-gray-400">暂无角色</div>';
             return;
@@ -721,6 +724,9 @@ class OutlineModal {
         if (!container || !this.storyData.core_elements) return;
         
         const settings = this.storyData.core_elements.settings || [];
+        
+        // 更新添加按钮状态
+        this.updateAddButtonState('setting', settings.length);
         
         if (settings.length === 0) {
             container.innerHTML = '<div class="text-center py-6 text-sm text-gray-400">暂无场景</div>';
@@ -926,6 +932,14 @@ class OutlineModal {
             this.storyData.core_elements.characters = [];
         }
         
+        // 检查是否达到最大数量
+        if (this.storyData.core_elements.characters.length >= 10) {
+            if (typeof showToast === 'function') {
+                showToast('最多只能添加10个角色！', 'error');
+            }
+            return;
+        }
+        
         this.storyData.core_elements.characters.push({
             name: '',
             description: ''
@@ -959,6 +973,14 @@ class OutlineModal {
             this.storyData.core_elements.settings = [];
         }
         
+        // 检查是否达到最大数量
+        if (this.storyData.core_elements.settings.length >= 10) {
+            if (typeof showToast === 'function') {
+                showToast('最多只能添加10个场景！', 'error');
+            }
+            return;
+        }
+        
         this.storyData.core_elements.settings.push({
             name: '',
             description: ''
@@ -968,6 +990,29 @@ class OutlineModal {
         
         // 滚动到新添加的场景并高亮
         this.highlightNewCard('setting', this.storyData.core_elements.settings.length - 1);
+    }
+    
+    // 更新添加按钮状态
+    updateAddButtonState(type, currentCount) {
+        const maxCount = 10;
+        const isDisabled = currentCount >= maxCount;
+        
+        // 根据类型选择对应的按钮容器
+        const buttonSelector = type === 'character' 
+            ? '.mb-5:has(#modalCharactersList) .add-button-light'
+            : '.mb-5:has(#modalSettingsList) .add-button-light';
+        
+        const button = document.querySelector(buttonSelector);
+        if (!button) return;
+        
+        if (isDisabled) {
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+            button.classList.remove('hover:bg-primary-50');
+            // 不阻止点击事件，保留在函数内提示
+        } else {
+            button.classList.remove('opacity-50', 'cursor-not-allowed');
+            button.classList.add('hover:bg-primary-50');
+        }
     }
     
     // 处理插入禁用状态

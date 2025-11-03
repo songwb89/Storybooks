@@ -34,6 +34,13 @@ class StorybookReader {
             newImage: ''           // 新生成的图片URL
         };
         
+        // PDF 缓存相关
+        this.pdfCache = {
+            url: null,              // 缓存的PDF URL
+            state: 'none',          // 'none' | 'generating' | 'ready' | 'outdated'
+            generatedAt: null       // 生成时间戳
+        };
+        
         // 初始化语音
         this.initVoices();
     }
@@ -116,6 +123,12 @@ class StorybookReader {
                             </button>
                         </div>
                     </div>
+                    
+                    <!-- 下载PDF按钮 -->
+                    <button id="downloadPDFBtn" onclick="window.storybookReader.downloadPDF()" class="flex items-center gap-1.5 px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i id="downloadPDFIcon" data-lucide="download" class="w-4 h-4"></i>
+                        <span id="downloadPDFText">下载PDF</span>
+                    </button>
                     
                     <!-- 退出编辑按钮 - 只在编辑模式显示 -->
                     <button id="finishEditBtn" onclick="window.storybookReader.toggleEditMode()" class="hidden flex items-center gap-1.5 px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-full text-sm font-medium transition-all shadow-sm">
@@ -946,6 +959,9 @@ class StorybookReader {
 
             // 标记有未保存的更改
             this.editMode.hasUnsavedChanges = true;
+            
+            // PDF缓存失效（因为内容已修改）
+            this.clearPDFCache();
 
             // 关闭编辑界面
             this.cancelTextEdit();
@@ -1081,6 +1097,9 @@ class StorybookReader {
         // 原型模式：只关闭对话框，不实际替换图片
         this.closeImageEditModal();
         
+        // PDF缓存失效（因为内容已修改）
+        this.clearPDFCache();
+        
         // 显示成功提示
         this.showToast('图片已采用（原型模式）', 'success');
         
@@ -1111,6 +1130,137 @@ class StorybookReader {
         rejectBtn.classList.add('hidden');
 
         this.editMode.newImage = '';
+    }
+
+    // ==================== PDF 下载相关 ====================
+    
+    /**
+     * 下载PDF（原型模式）
+     * 首次点击：模拟生成过程（3秒）+ 自动触发下载
+     * 再次点击：直接触发下载（0.3秒）
+     */
+    async downloadPDF() {
+        // 检查缓存
+        if (this.pdfCache.url && this.pdfCache.state === 'ready') {
+            // ===== 场景2：有缓存，直接下载 =====
+            console.log('📥 【原型模式】直接下载缓存的PDF');
+            console.log('实际项目中会执行:', {
+                操作: '触发浏览器下载',
+                URL: this.pdfCache.url,
+                文件名: `${this.currentBookData.title}.pdf`,
+                代码示例: 'window.location.href = pdfUrl'
+            });
+            
+            // 按钮短暂闪现"下载中..."
+            this.updateDownloadButton('下载中...', false, 'download');
+            await this.sleep(300);
+            
+            // Toast 提示
+            this.showToast('✅ 开始下载（原型演示）', 'success');
+            
+            // 恢复按钮
+            this.updateDownloadButton('下载PDF', false, 'download');
+            return;
+        }
+        
+        // ===== 场景1：无缓存，需要生成 =====
+        console.log('🔄 【原型模式】首次下载，需要生成PDF');
+        console.log('实际项目中会调用:', {
+            API: 'POST /api/books/generate-pdf',
+            参数: {
+                bookId: this.currentBookData?.id || 'demo-book-001',
+                title: this.currentBookData?.title || '绘本标题',
+                pages: this.currentBookData?.pages || []
+            }
+        });
+        
+        // 显示生成中状态
+        this.updateDownloadButton('生成中...', true, 'loader-2');
+        
+        // 模拟生成过程（3秒）
+        await this.sleep(3000);
+        
+        // 模拟生成完成，缓存URL
+        const mockPdfUrl = `https://cdn.example.com/storybooks/${this.currentBookData?.title || 'demo'}.pdf`;
+        this.pdfCache = {
+            url: mockPdfUrl,
+            state: 'ready',
+            generatedAt: Date.now()
+        };
+        
+        console.log('✅ 【原型模式】PDF生成完成');
+        console.log('实际项目中会执行:', {
+            操作: '触发浏览器下载',
+            URL: mockPdfUrl,
+            代码示例: `
+                const link = document.createElement('a');
+                link.href = '${mockPdfUrl}';
+                link.download = '${this.currentBookData?.title || '绘本'}.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            `
+        });
+        
+        // Toast 提示
+        this.showToast('📄 PDF已生成并开始下载（原型演示）', 'success');
+        
+        // 恢复按钮
+        this.updateDownloadButton('下载PDF', false, 'download');
+    }
+    
+    /**
+     * 更新下载按钮状态
+     * @param {string} text - 按钮文字
+     * @param {boolean} disabled - 是否禁用
+     * @param {string} iconName - lucide图标名称
+     */
+    updateDownloadButton(text, disabled, iconName) {
+        const btn = document.getElementById('downloadPDFBtn');
+        const textEl = document.getElementById('downloadPDFText');
+        const iconEl = document.getElementById('downloadPDFIcon');
+        
+        if (!btn || !textEl || !iconEl) return;
+        
+        // 更新文字
+        textEl.textContent = text;
+        
+        // 更新禁用状态
+        btn.disabled = disabled;
+        
+        // 更新图标
+        iconEl.setAttribute('data-lucide', iconName);
+        
+        // 添加/移除动画类
+        if (iconName === 'loader-2') {
+            iconEl.classList.add('animate-spin');
+        } else {
+            iconEl.classList.remove('animate-spin');
+        }
+        
+        // 重新渲染图标
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+    
+    /**
+     * 清除PDF缓存（用于测试或内容编辑后）
+     */
+    clearPDFCache() {
+        this.pdfCache = {
+            url: null,
+            state: 'none',
+            generatedAt: null
+        };
+        console.log('🗑️ PDF缓存已清除');
+    }
+    
+    /**
+     * 辅助方法：延迟执行
+     */
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     // 显示提示消息

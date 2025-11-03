@@ -10,6 +10,19 @@ class GenerationProgress {
         this.isGenerating = false;
         this.onCancelCallback = null;
         
+        // 脚本生成的详细进度追踪
+        this.scriptProgress = {
+            phase: 'pending', // pending, character_models, scene_models, cover, pages
+            currentPage: 0,
+            totalPages: 0
+        };
+        
+        // 图片生成的详细进度追踪
+        this.imageProgress = {
+            current: 0,
+            total: 0
+        };
+        
         // 初始化 DOM
         this.init();
     }
@@ -199,12 +212,12 @@ class GenerationProgress {
             },
             2: {
                 pending: '等待编写详细的故事内容...',
-                active: '正在编写详细的故事内容...',
+                active: this.getScriptProgressText(), // 动态获取脚本生成进度文本
                 completed: '已编写完整的故事脚本'
             },
             3: {
                 pending: '等待AI绘制精美插图...',
-                active: '正在生成精美插图...',
+                active: this.getImageProgressText(), // 动态获取图片生成进度文本
                 completed: '已生成所有插图'
             }
         };
@@ -325,6 +338,158 @@ class GenerationProgress {
      */
     getCurrentStep() {
         return this.currentStep;
+    }
+
+    /**
+     * 获取脚本生成进度文本
+     * @returns {string}
+     */
+    getScriptProgressText() {
+        const phase = this.scriptProgress.phase;
+        
+        switch(phase) {
+            case 'character_models':
+                return '正在生成角色模型...';
+            case 'scene_models':
+                return '正在构建场景描述...';
+            case 'cover':
+                return '正在设计封面...';
+            case 'pages':
+                if (this.scriptProgress.currentPage > 0) {
+                    return `正在生成第 ${this.scriptProgress.currentPage} 页...`;
+                }
+                return '正在编写故事页面...';
+            default:
+                return '正在编写详细的故事内容...';
+        }
+    }
+
+    /**
+     * 获取图片生成进度文本
+     * @returns {string}
+     */
+    getImageProgressText() {
+        if (this.imageProgress.total > 0 && this.imageProgress.current > 0) {
+            return `正在生成插图 ${this.imageProgress.current}/${this.imageProgress.total}`;
+        }
+        return '正在生成精美插图...';
+    }
+
+    /**
+     * 更新脚本生成进度（通过识别流式输出的关键词）
+     * @param {string} streamContent - 流式输出的内容片段
+     */
+    updateScriptProgress(streamContent) {
+        // 识别 character_models
+        if (streamContent.includes('"character_models"')) {
+            this.scriptProgress.phase = 'character_models';
+            this.updateStep(2, 'active');
+        }
+        // 识别 scene_models
+        else if (streamContent.includes('"scene_models"')) {
+            this.scriptProgress.phase = 'scene_models';
+            this.updateStep(2, 'active');
+        }
+        // 识别 cover
+        else if (streamContent.includes('"cover"')) {
+            this.scriptProgress.phase = 'cover';
+            this.updateStep(2, 'active');
+        }
+        // 识别 page_number (提取页码)
+        else if (streamContent.includes('"page_number"')) {
+            this.scriptProgress.phase = 'pages';
+            
+            // 尝试提取页码
+            const match = streamContent.match(/"page_number":\s*(\d+)/);
+            if (match) {
+                this.scriptProgress.currentPage = parseInt(match[1]);
+            }
+            
+            this.updateStep(2, 'active');
+        }
+    }
+
+    /**
+     * 更新图片生成进度
+     * @param {number} current - 当前已生成的图片数量
+     * @param {number} total - 总图片数量
+     */
+    updateImageProgress(current, total) {
+        this.imageProgress.current = current;
+        this.imageProgress.total = total;
+        this.updateStep(3, 'active');
+    }
+
+    /**
+     * 模拟绘本生成流程（使用假数据）
+     * 用于测试和演示
+     */
+    async simulateGeneration() {
+        this.isGenerating = true;
+        
+        // 步骤1：分析故事大纲（固定3秒）
+        this.updateStep(1, 'active');
+        await this.sleep(3000);
+        this.updateStep(1, 'completed');
+        
+        // 步骤2：生成故事脚本（模拟流式输出）
+        this.updateStep(2, 'active');
+        await this.simulateScriptGeneration();
+        this.updateStep(2, 'completed');
+        
+        // 步骤3：生成插图（模拟每页生成）
+        this.updateStep(3, 'active');
+        await this.simulateImageGeneration(20); // 假设20页
+        this.updateStep(3, 'completed');
+        
+        // 完成
+        this.complete(() => {
+            if (window.showToast) {
+                window.showToast('绘本生成完成！', 'success');
+            }
+        });
+    }
+
+    /**
+     * 模拟脚本生成流程
+     */
+    async simulateScriptGeneration() {
+        const phases = [
+            { key: '"character_models"', delay: 800 },
+            { key: '"scene_models"', delay: 800 },
+            { key: '"cover"', delay: 600 },
+        ];
+        
+        // 模拟角色、场景、封面生成
+        for (const phase of phases) {
+            this.updateScriptProgress(phase.key);
+            await this.sleep(phase.delay);
+        }
+        
+        // 模拟20页的生成
+        for (let i = 1; i <= 20; i++) {
+            this.updateScriptProgress(`"page_number": ${i}`);
+            await this.sleep(300); // 每页300ms
+        }
+    }
+
+    /**
+     * 模拟图片生成流程
+     * @param {number} totalPages - 总页数
+     */
+    async simulateImageGeneration(totalPages) {
+        for (let i = 1; i <= totalPages; i++) {
+            this.updateImageProgress(i, totalPages);
+            await this.sleep(500); // 每张图500ms
+        }
+    }
+
+    /**
+     * 辅助函数：延迟
+     * @param {number} ms - 毫秒数
+     */
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 }
 

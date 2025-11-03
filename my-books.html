@@ -1367,69 +1367,46 @@
         }
 
         // 模拟绘本生成过程
-        function simulateBookGeneration(bookId) {
-            console.log('开始模拟生成，bookId:', bookId);
+        async function simulateBookGeneration(bookId) {
+            console.log('开始模拟生成（使用新的详细进度追踪），bookId:', bookId);
             const book = booksData.find(b => b.id === bookId);
             if (!book) {
                 console.error('simulateBookGeneration: 未找到书籍，bookId:', bookId);
                 return;
             }
 
-            console.log('找到书籍，开始第1步，书籍:', book);
+            console.log('找到书籍，使用新的模拟生成流程:', book);
 
-            // 第1步：分析故事大纲 (3秒)
-            setTimeout(() => {
-                console.log('第1步完成，准备进入第2步');
-                console.log('当前进度状态:', generationProgress.isInProgress());
-                console.log('当前bookId:', generationProgress.getCurrentBookId());
+            // 使用新的模拟生成方法（带详细进度追踪）
+            try {
+                await generationProgress.simulateGeneration();
                 
-                if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) {
-                    console.warn('进度已取消或bookId不匹配，停止生成');
-                    return;
-                }
-                
-                book.generationStep = 2;
-                generationProgress.completeStep(1);
-                generationProgress.setCurrentStep(2);
-                console.log('第2步已开始');
-
-                // 第2步：生成故事脚本 (5秒)
-                setTimeout(() => {
-                    if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
+                // 生成完成后更新书籍状态
+                if (book && book.status === 'generating') {
+                    book.status = 'completed';
+                    book.progress = 100;
+                    book.generationStep = 0;
+                    book.completedAt = new Date().toISOString();
+                    renderBooks();
                     
-                    book.generationStep = 3;
-                    generationProgress.completeStep(2);
-                    generationProgress.setCurrentStep(3);
-
-                    // 第3步：生成插图 (7秒)
+                    showToast('✅ 绘本生成完成！', 'success');
+                    
+                    // 自动打开绘本阅读器
                     setTimeout(() => {
-                        if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
-                        
-                        book.generationStep = 3;
-                        generationProgress.completeStep(3);
-                        
-                        // 生成完成
-                        setTimeout(() => {
-                            book.status = 'completed';
-                            book.progress = 100;
-                            book.generationStep = 0;
-                            book.completedAt = new Date().toISOString();
-                            renderBooks();
-                            
-                            generationProgress.complete(() => {
-                                showToast('✅ 绘本生成完成！', 'success');
-                                
-                                // 自动打开绘本阅读器
-                                setTimeout(() => {
-                                    if (window.storybookReader && window.defaultStorybookData) {
-                                        window.storybookReader.open(window.defaultStorybookData);
-                                    }
-                                }, 500);
-                            });
-                        }, 2000);
-                    }, 7000);
-                }, 5000);
-            }, 3000);
+                        if (window.storybookReader && window.defaultStorybookData) {
+                            window.storybookReader.open(window.defaultStorybookData);
+                        }
+                    }, 500);
+                }
+            } catch (error) {
+                console.error('生成过程出错:', error);
+                if (book) {
+                    book.status = 'failed';
+                    book.progress = 0;
+                    renderBooks();
+                }
+                showToast('生成失败，请重试', 'error');
+            }
         }
 
         function deleteBook(bookId) {

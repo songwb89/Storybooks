@@ -295,7 +295,7 @@
 
     </div>
 
-    <div class="fixed right-6 top-20 z-40">
+    <div class="fixed right-6 top-20 z-40 flex flex-col gap-3">
 
         <button onclick="goToMyBooks()" title="我的绘本" class="w-11 h-11 bg-amber-500 hover:bg-amber-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center">
 
@@ -1502,40 +1502,27 @@
         });
 
         // 模拟生成过程（使用新组件）
-        function simulateGeneration() {
+        async function simulateGeneration() {
             const bookId = 'index-story-' + Date.now();
             
             // 显示进度窗口
             generationProgress.show(bookId, 1);
             
-            // 第1步：分析故事大纲 (3秒)
-            setTimeout(() => {
-                if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
-                generationProgress.completeStep(1);
-                generationProgress.setCurrentStep(2);
-
-                // 第2步：生成故事脚本 (5秒)
+            try {
+                // 使用统一的模拟生成方法
+                await generationProgress.simulateGeneration();
+                
+                // 生成完成后的操作
+                showToast('✅ 绘本生成完成！', 'success');
+                
+                // 自动打开绘本查看窗口
                 setTimeout(() => {
-                    if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
-                    generationProgress.completeStep(2);
-                    generationProgress.setCurrentStep(3);
-
-                    // 第3步：生成插图 (7秒)
-                    setTimeout(() => {
-                        if (!generationProgress.isInProgress() || generationProgress.getCurrentBookId() !== bookId) return;
-                        generationProgress.completeStep(3);
-                        
-                        // 生成完成
-                        generationProgress.complete(() => {
-                            showToast('✅ 绘本生成完成！', 'success');
-                            // 自动打开绘本查看窗口
-                            setTimeout(() => {
-                                window.storybookReader.open(window.defaultStorybookData);
-                            }, 500);
-                        });
-                    }, 7000);
-                }, 5000);
-            }, 3000);
+                    window.storybookReader.open(window.defaultStorybookData);
+                }, 500);
+            } catch (error) {
+                // 生成被取消或出错
+                console.log('生成过程终止:', error);
+            }
         }
 
 	// ]]>

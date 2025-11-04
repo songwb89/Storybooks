@@ -22,6 +22,10 @@
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     
+    <!-- 侧边栏菜单组件 -->
+    <link rel="stylesheet" href="css/sidebar-menu.css">
+    <script src="js/sidebar-menu.js"></script>
+    
     <!-- 绘本阅读器模块 -->
     <script src="js/storybook-reader.js"></script>
     
@@ -281,20 +285,10 @@
 
     </header>
 
+    <!-- 侧边栏菜单 -->
+    <div id="sidebarMenu"></div>
 
-
-    <!-- 返回按钮和我的绘本按钮 -->
-
-    <div class="fixed left-6 top-20 z-40">
-
-        <button onclick="goBack()" class="w-11 h-11 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all hover:-translate-x-1 flex items-center justify-center group">
-
-            <i data-lucide="arrow-left" class="w-4 h-4"></i>
-
-        </button>
-
-    </div>
-
+    <!-- 我的绘本按钮 -->
     <div class="fixed right-6 top-20 z-40 flex flex-col gap-3">
 
         <button onclick="goToMyBooks()" title="我的绘本" class="w-11 h-11 bg-amber-500 hover:bg-amber-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center">
@@ -309,7 +303,8 @@
 
     <!-- 主容器 -->
 
-    <div class="max-w-6xl mx-auto px-6 py-4 relative">
+    <div class="main-content-with-sidebar">
+        <div class="max-w-6xl mx-auto px-6 py-4 relative">
 
 
 
@@ -538,6 +533,7 @@
 
         </div>
 
+        </div>
     </div>
 
 
@@ -745,7 +741,8 @@
 
         lucide.createIcons();
 
-
+        // 初始化侧边栏菜单
+        initSidebarMenu('ai-storybook');
 
         // ========== 自定义对话框组件 ==========
 
@@ -906,16 +903,6 @@
                 }
 
             }, 200);
-
-        }
-
-
-
-        // 返回项目入口页
-
-        function goBack() {
-
-            // 点击无反应
 
         }
 

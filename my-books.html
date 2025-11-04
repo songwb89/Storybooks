@@ -10,6 +10,10 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     
+    <!-- 侧边栏菜单组件 -->
+    <link rel="stylesheet" href="css/sidebar-menu.css">
+    <script src="js/sidebar-menu.js"></script>
+    
     <!-- 绘本阅读器模块 -->
     <script src="js/storybook-reader.js"></script>
     
@@ -76,6 +80,37 @@
         }
 
         /* 首页风格样式 - 图片和文字分离 */
+        
+        /* 面包屑导航样式 */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #9ca3af;
+        }
+        
+        .breadcrumb a {
+            color: #6b7280;
+            text-decoration: none;
+            transition: all 0.2s;
+            border-bottom: 1px solid transparent;
+        }
+        
+        .breadcrumb a:hover {
+            color: #374151;
+            border-bottom-color: #374151;
+        }
+        
+        .breadcrumb .separator {
+            color: #d1d5db;
+            margin: 0 4px;
+        }
+        
+        .breadcrumb .current {
+            color: #1f2937;
+            font-weight: 600;
+        }
     </style>
 </head>
 
@@ -100,20 +135,28 @@
         </div>
     </header>
 
-    <!-- 返回按钮 -->
-    <div class="fixed left-6 top-20 z-40">
-        <button onclick="goBack()" class="w-11 h-11 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all hover:-translate-x-1 flex items-center justify-center group">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i>
-        </button>
-    </div>
+    <!-- 侧边栏菜单 -->
+    <div id="sidebarMenu"></div>
 
     <!-- 主容器 -->
-    <div class="max-w-[1400px] mx-auto px-6 py-4 relative">
+    <div class="pl-[200px] pr-6 py-4 relative">
+        <div class="w-full px-6">
+        <!-- 面包屑导航 -->
+        <div class="breadcrumb mb-3">
+            <a href="home.html">AI绘本</a>
+            <span class="separator">›</span>
+            <span class="current">我的绘本</span>
+        </div>
+
         <!-- 页面标题 -->
-        <div class="mt-6 mb-6">
-            <h1 class="text-2xl font-semibold text-gray-800">
+        <div class="mb-8 flex items-center justify-between">
+            <h1 class="text-2xl font-semibold text-gray-900">
                 我的绘本
             </h1>
+            <button onclick="createNewBook()" class="px-4 py-2 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                创建新绘本
+            </button>
         </div>
 
         <!-- 绘本网格 -->
@@ -136,6 +179,7 @@
         <!-- 分页组件 -->
         <div id="paginationContainer" class="flex justify-center items-center gap-2 mt-8 mb-4">
             <!-- 分页按钮将通过JavaScript动态生成 -->
+        </div>
         </div>
     </div>
 
@@ -348,6 +392,9 @@
                 }
             });
         }
+
+        // 初始化侧边栏菜单（激活AI绘本菜单项）
+        initSidebarMenu('ai-storybook');
 
         // 初始化 Lucide 图标
         lucide.createIcons();
@@ -1198,7 +1245,6 @@
 
         // 各种操作函数
         function createNewBook() {
-            showToast('跳转到创建新绘本页面', 'info');
             window.location.href = 'home.html';
         }
 
@@ -1412,11 +1458,6 @@
                 renderBooks();
                 showToast('绘本已删除', 'success');
             }
-        }
-
-        // 返回上一页
-        function goBack() {
-            window.history.back();
         }
 
         // 显示提示消息

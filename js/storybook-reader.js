@@ -609,6 +609,60 @@ class StorybookReader {
                 voiceMenu.classList.add('hidden');
             }
         });
+        
+        // 绑定点击区域翻页事件
+        this.bindClickPageEvents();
+    }
+    
+    // 绑定点击区域翻页
+    bindClickPageEvents() {
+        const imageContainer = document.getElementById('imageContainer');
+        const textContainer = document.getElementById('textContainer');
+        
+        // 左侧图片区域点击 → 上一页
+        if (imageContainer) {
+            imageContainer.addEventListener('click', (e) => {
+                // 编辑模式下不翻页
+                if (this.editMode.isActive) return;
+                
+                // 如果点击的是按钮或其子元素，不翻页
+                const isButton = e.target.closest('button');
+                if (isButton) return;
+                
+                // 如果点击的是加载动画区域，不翻页
+                if (e.target.closest('#imageLoader')) return;
+                
+                // 翻到上一页
+                this.previousPage();
+            });
+            
+            // 添加视觉提示：鼠标悬停时显示指针
+            imageContainer.style.cursor = 'pointer';
+        }
+        
+        // 右侧文字区域点击 → 下一页
+        if (textContainer) {
+            textContainer.addEventListener('click', (e) => {
+                // 编辑模式下不翻页
+                if (this.editMode.isActive) return;
+                
+                // 如果点击的是按钮或其子元素，不翻页
+                const isButton = e.target.closest('button');
+                if (isButton) return;
+                
+                // 如果点击的是页码显示，不翻页
+                if (e.target.closest('#pageNumberDisplay')) return;
+                
+                // 如果点击的是文字编辑区域，不翻页
+                if (e.target.closest('#textEditMode')) return;
+                
+                // 翻到下一页
+                this.nextPage();
+            });
+            
+            // 添加视觉提示：鼠标悬停时显示指针
+            textContainer.style.cursor = 'pointer';
+        }
     }
 
     // ========== 语音播放相关方法 ==========

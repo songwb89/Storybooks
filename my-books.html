@@ -427,28 +427,22 @@
 
         // ========== 登录状态管理 ==========
         
-        // 检查登录状态
+        // 检查登录状态（默认已登录）
         function checkLoginStatus() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            // 默认显示已登录状态
+            document.getElementById('notLoggedIn').classList.add('hidden');
+            document.getElementById('loggedIn').classList.remove('hidden');
             
-            if (isLoggedIn && userData.username) {
-                // 显示已登录状态
-                document.getElementById('notLoggedIn').classList.add('hidden');
-                document.getElementById('loggedIn').classList.remove('hidden');
-                
-                // 更新用户信息
-                const nickname = userData.nickname || userData.username;
-                document.getElementById('userNickname').textContent = nickname;
-                
-                // 更新头像（取昵称首字母）
-                const firstLetter = nickname.charAt(0).toUpperCase();
-                document.getElementById('userAvatar').textContent = firstLetter;
-            } else {
-                // 显示未登录状态
-                document.getElementById('notLoggedIn').classList.remove('hidden');
-                document.getElementById('loggedIn').classList.add('hidden');
-            }
+            // 获取用户数据或使用默认值"张三"
+            const userData = JSON.parse(localStorage.getItem('userData') || '{"username":"张三","nickname":"张三"}');
+            const nickname = userData.nickname || userData.username || '张三';
+            
+            // 更新用户信息
+            document.getElementById('userNickname').textContent = nickname;
+            
+            // 更新头像（取昵称首字母）
+            const firstLetter = nickname.charAt(0).toUpperCase();
+            document.getElementById('userAvatar').textContent = firstLetter;
             
             lucide.createIcons();
         }
@@ -481,20 +475,12 @@
         function handleLogout(event) {
             event.preventDefault();
             
-            showConfirm('确定要退出登录吗？', '退出登录', '退出').then((confirmed) => {
-                if (confirmed) {
-                    // 清除登录状态
-                    localStorage.removeItem('isLoggedIn');
-                    localStorage.removeItem('userData');
-                    
-                    showToast('已退出登录', 'success');
-                    
-                    // 跳转到首页
-                    setTimeout(() => {
-                        window.location.href = 'home.html';
-                    }, 500);
-                }
-            });
+            // 清除登录状态
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userData');
+            
+            // 跳转到登录页
+            window.location.href = 'login.html';
         }
 
         // 初始化模态窗口

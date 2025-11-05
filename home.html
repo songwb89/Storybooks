@@ -766,28 +766,19 @@
 
         // ========== 登录状态管理 ==========
         
-        // 检查登录状态
+        // 检查登录状态（写死为已登录状态）
         function checkLoginStatus() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            // 强制显示已登录状态
+            document.getElementById('notLoggedIn').classList.add('hidden');
+            document.getElementById('loggedIn').classList.remove('hidden');
             
-            if (isLoggedIn && userData.username) {
-                // 显示已登录状态
-                document.getElementById('notLoggedIn').classList.add('hidden');
-                document.getElementById('loggedIn').classList.remove('hidden');
-                
-                // 更新用户信息
-                const nickname = userData.nickname || userData.username;
-                document.getElementById('userNickname').textContent = nickname;
-                
-                // 更新头像（取昵称首字母）
-                const firstLetter = nickname.charAt(0).toUpperCase();
-                document.getElementById('userAvatar').textContent = firstLetter;
-            } else {
-                // 显示未登录状态
-                document.getElementById('notLoggedIn').classList.remove('hidden');
-                document.getElementById('loggedIn').classList.add('hidden');
-            }
+            // 使用固定的用户信息
+            const nickname = '张三';
+            document.getElementById('userNickname').textContent = nickname;
+            
+            // 更新头像（取昵称首字母）
+            const firstLetter = nickname.charAt(0).toUpperCase();
+            document.getElementById('userAvatar').textContent = firstLetter;
             
             lucide.createIcons();
         }
@@ -816,24 +807,11 @@
             }
         });
         
-        // 退出登录
+        // 退出登录（原型中禁用此功能）
         function handleLogout(event) {
             event.preventDefault();
-            
-            showConfirm('确定要退出登录吗？', '退出登录', '退出').then((confirmed) => {
-                if (confirmed) {
-                    // 清除登录状态
-                    localStorage.removeItem('isLoggedIn');
-                    localStorage.removeItem('userData');
-                    
-                    showToast('已退出登录', 'success');
-                    
-                    // 跳转到登录页
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 500);
-                }
-            });
+            // 原型中不需要退出登录功能，什么也不做
+            return false;
         }
 
         // ========== 自定义对话框组件 ==========
@@ -1003,17 +981,8 @@
         // 进入我的绘本页面
 
         async function goToMyBooks() {
-            // 检查登录状态
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            
-            if (!isLoggedIn) {
-                // 未登录，跳转到登录页
-                window.location.href = 'login.html?return=' + encodeURIComponent(window.location.pathname);
-                return;
-            }
-
+            // 原型中默认已登录，直接跳转
             window.location.href = 'my-books.html';
-
         }
 
 
@@ -1070,21 +1039,7 @@
         // 生成大纲
 
         async function generateOutline() {
-            // 检查登录状态
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            
-            if (!isLoggedIn) {
-                // 保存输入框内容到 localStorage
-                const storyInput = document.getElementById('storyInput');
-                const inputValue = storyInput.value.trim();
-                if (inputValue) {
-                    localStorage.setItem('pendingStoryInput', inputValue);
-                }
-                
-                // 未登录，跳转到登录页
-                window.location.href = 'login.html?return=' + encodeURIComponent(window.location.pathname);
-                return;
-            }
+            // 原型中默认已登录，直接校验输入
             
             // 校验输入
             if (!validateStoryInput(true)) {

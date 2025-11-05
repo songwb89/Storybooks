@@ -427,15 +427,14 @@
 
         // ========== 登录状态管理 ==========
         
-        // 检查登录状态（默认已登录）
+        // 检查登录状态（写死为已登录状态）
         function checkLoginStatus() {
-            // 默认显示已登录状态
+            // 强制显示已登录状态
             document.getElementById('notLoggedIn').classList.add('hidden');
             document.getElementById('loggedIn').classList.remove('hidden');
             
-            // 获取用户数据或使用默认值"张三"
-            const userData = JSON.parse(localStorage.getItem('userData') || '{"username":"张三","nickname":"张三"}');
-            const nickname = userData.nickname || userData.username || '张三';
+            // 使用固定的用户信息
+            const nickname = '张三';
             
             // 更新用户信息
             document.getElementById('userNickname').textContent = nickname;
@@ -471,16 +470,11 @@
             }
         });
         
-        // 退出登录
+        // 退出登录（原型中禁用此功能）
         function handleLogout(event) {
             event.preventDefault();
-            
-            // 清除登录状态
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('userData');
-            
-            // 跳转到登录页
-            window.location.href = 'login.html';
+            // 原型中不需要退出登录功能，什么也不做
+            return false;
         }
 
         // 初始化模态窗口

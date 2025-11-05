@@ -111,11 +111,9 @@ stop
 
     state "阶段一：分析故事主题" as S1 {
       left to right direction
-      state "等待中" as W1
       state "进行中" as R1
       state "已完成" as D1
-      [*] --> W1
-      W1 --> R1 : 开始接收数据流
+      [*] --> R1 : 触发生成大纲
       R1 --> D1 : 识别到 "characters" 关键词
     }
 
@@ -337,12 +335,10 @@ stop
 @startuml
 state "阶段 1：分析故事大纲" as S1 {
   left to right direction
-  state "等待中" as W1
   state "进行中" as R1
   state "已完成" as D1
-  [*] --> W1
-  W1 --> R1 : 开始生成
-  R1 --> D1 : 分析完成
+  [*] --> R1 : 触发生成绘本
+  R1 --> D1 : 识别到 "character_models" 关键词
 }
 
 state "阶段 2：生成故事脚本" as S2 {

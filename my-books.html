@@ -880,6 +880,8 @@
                     clickHandler = `onclick="readBookDirectly(${book.id})"`;
                     break;
                 case 'draft':
+                    clickHandler = `onclick="openOutlineConfirm(${book.id})"`;
+                    break;
                 case 'failed':
                 case 'cancelled':
                     // 失败和已取消状态点击无效

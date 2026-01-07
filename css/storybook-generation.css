@@ -1,0 +1,1189 @@
+/**
+ * 绘本生成进度组件样式
+ * 全屏弹窗设计，与 outline-modal 和 storybook-reader 风格一致
+ */
+
+/* 全屏弹窗容器 */
+.sg-modal {
+    position: fixed;
+    inset: 0;
+    background-color: white;
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+}
+
+.sg-modal.active {
+    display: flex;
+}
+
+/* 头部 */
+.sg-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.sg-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sg-close-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    color: #4b5563;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.sg-close-btn:hover {
+    background-color: #f3f4f6;
+    color: #1f2937;
+}
+
+.sg-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.sg-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* 进度时间线 */
+.sg-timeline {
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    background: linear-gradient(to bottom, #fafafa, white);
+}
+
+.sg-timeline-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.sg-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.sg-step-dot {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    transition: all 0.3s;
+    position: relative;
+    z-index: 1;
+}
+
+.sg-step-dot.pending {
+    background-color: #e5e7eb;
+    color: #9ca3af;
+}
+
+.sg-step-dot.active {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
+
+.sg-step-dot.completed {
+    background-color: #10b981;
+    color: white;
+}
+
+.sg-step-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.sg-step-label.active {
+    color: #6366f1;
+    font-weight: 500;
+}
+
+.sg-step-label.completed {
+    color: #10b981;
+}
+
+.sg-step-line {
+    width: 60px;
+    height: 3px;
+    background-color: #e5e7eb;
+    margin: 0 0.5rem;
+    margin-bottom: 1.5rem;
+    transition: background-color 0.3s;
+}
+
+.sg-step-line.completed {
+    background-color: #10b981;
+}
+
+/* 内容区域 */
+.sg-content {
+    flex: 1;
+    overflow-y: auto;
+    background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
+}
+
+/* 进度时间线 - 内嵌在内容区 */
+.sg-timeline {
+    padding: 1.25rem 2rem;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.sg-timeline-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* 页面卡片包装器 */
+.sg-pages-wrapper {
+    padding: 1.5rem 2rem;
+}
+
+/* 提示语区域（前面步骤） */
+.sg-hint-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 200px);
+    text-align: center;
+    padding: 2rem;
+}
+
+.sg-hint-icon {
+    width: 6rem;
+    height: 6rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+}
+
+.sg-hint-icon i {
+    width: 3rem;
+    height: 3rem;
+    color: white;
+}
+
+.sg-hint-icon.spinning i {
+    animation: sg-spin 2s linear infinite;
+}
+
+@keyframes sg-spin {
+    to { transform: rotate(360deg); }
+}
+
+.sg-hint-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.75rem;
+}
+
+.sg-hint-desc {
+    font-size: 1rem;
+    color: #6b7280;
+    max-width: 400px;
+}
+
+/* 页面卡片网格 */
+.sg-pages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
+}
+
+/* 页面卡片 */
+.sg-page-card {
+    background: white;
+    border-radius: 0.75rem;
+    border: 2px solid #e5e7eb;
+    overflow: hidden;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.sg-page-card:hover {
+    border-color: #6366f1;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+    transform: translateY(-2px);
+}
+
+.sg-page-card.completed {
+    cursor: default;
+}
+
+.sg-page-card.failed {
+    border-color: #fca5a5;
+}
+
+.sg-page-card.failed .sg-card-info {
+    background-color: white;
+}
+
+.sg-page-card.failed:hover {
+    border-color: #f87171;
+}
+
+/* 卡片图片区域 */
+.sg-card-image {
+    aspect-ratio: 4 / 3;
+    background-color: #f3f4f6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.sg-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 图片状态 */
+.sg-card-image.pending {
+    background-color: #f3f4f6;
+}
+
+.sg-card-image.pending .sg-status-icon {
+    color: #9ca3af;
+}
+
+.sg-card-image.generating {
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+}
+
+.sg-card-image.generating .sg-status-icon {
+    color: #6366f1;
+    animation: sg-spin 1.5s linear infinite;
+}
+
+.sg-card-image.completed {
+    background-color: transparent;
+}
+
+.sg-card-image.failed {
+    background-color: #fef2f2;
+}
+
+.sg-card-image.failed .sg-status-icon {
+    color: #ef4444;
+}
+
+.sg-status-icon {
+    width: 2rem;
+    height: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.sg-status-text {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.sg-card-image.failed .sg-status-text {
+    color: #ef4444;
+}
+
+/* 失败卡片的重新生成按钮 */
+.sg-retry-btn {
+    margin-top: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.sg-retry-btn:hover {
+    background-color: #dc2626;
+}
+
+/* 卡片信息区域 */
+.sg-card-info {
+    padding: 0.75rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.sg-card-page-num {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6366f1;
+    margin-bottom: 0.25rem;
+}
+
+.sg-card-narration {
+    font-size: 0.75rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+.sg-btn {
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sg-btn-primary {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.sg-btn-primary:hover {
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    transform: translateY(-1px);
+}
+
+.sg-btn-secondary {
+    background-color: white;
+    color: #6366f1;
+    border: 2px solid #6366f1;
+}
+
+.sg-btn-secondary:hover {
+    background-color: #eef2ff;
+}
+
+.sg-btn-danger {
+    background-color: white;
+    color: #6b7280;
+    border: 2px solid #d1d5db;
+}
+
+.sg-btn-danger:hover {
+    background-color: #f9fafb;
+    border-color: #9ca3af;
+}
+
+/* 详情弹窗 */
+.sg-detail-modal {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 250;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.sg-detail-modal.active {
+    display: flex;
+}
+
+.sg-detail-container {
+    background: white;
+    width: 100%;
+    max-width: 550px;
+    max-height: 90vh;
+    border-radius: 1rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.sg-detail-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafafa;
+}
+
+.sg-detail-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.sg-detail-close-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+}
+
+.sg-detail-close-btn:hover {
+    background-color: #e5e7eb;
+    color: #1f2937;
+}
+
+.sg-detail-content {
+    padding: 1.25rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.sg-detail-image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background-color: #f3f4f6;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+}
+
+.sg-detail-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sg-detail-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.375rem;
+}
+
+.sg-detail-textarea {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.8125rem;
+    color: #374151;
+    resize: vertical;
+    min-height: 70px;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+    font-family: inherit;
+}
+
+.sg-detail-textarea:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.sg-detail-footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    background: #fafafa;
+}
+
+/* 滚动条样式 */
+.sg-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sg-content::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.sg-content::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.sg-content::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+
+/* ==================== 卡片菜单样式 ==================== */
+
+/* 卡片菜单容器 */
+.sg-card-menu {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 10;
+}
+
+/* 菜单按钮 */
+.sg-menu-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.sg-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: scale(1.05);
+}
+
+.sg-menu-btn i {
+    color: #4b5563;
+}
+
+/* 下拉菜单 */
+.sg-menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.25rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 120px;
+    overflow: hidden;
+    z-index: 20;
+}
+
+.sg-menu-dropdown.hidden {
+    display: none;
+}
+
+/* 菜单项 */
+.sg-menu-item {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: #374151;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    text-align: left;
+}
+
+.sg-menu-item:hover {
+    background-color: #f3f4f6;
+}
+
+.sg-menu-item i {
+    color: #6b7280;
+}
+
+.sg-menu-item:first-child {
+    border-bottom: 1px solid #f3f4f6;
+}
+
+/* ==================== 文字编辑弹窗样式 ==================== */
+
+.sg-edit-modal {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 260;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.sg-edit-modal.active {
+    display: flex;
+}
+
+.sg-edit-container {
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.sg-edit-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafafa;
+}
+
+.sg-edit-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.sg-edit-close-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+}
+
+.sg-edit-close-btn:hover {
+    background-color: #e5e7eb;
+    color: #1f2937;
+}
+
+.sg-edit-content {
+    padding: 1.25rem;
+}
+
+.sg-edit-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.sg-edit-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: #374151;
+    resize: vertical;
+    min-height: 120px;
+    transition: border-color 0.2s;
+    font-family: inherit;
+    line-height: 1.6;
+}
+
+.sg-edit-textarea:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.sg-edit-footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    background: #fafafa;
+}
+
+/* ==================== 图片编辑弹窗样式（微调模式） ==================== */
+
+.sg-image-edit-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 260;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.sg-image-edit-modal.active {
+    display: flex;
+}
+
+.sg-image-edit-backdrop {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: blur(40px);
+    opacity: 0.6;
+}
+
+.sg-image-edit-container {
+    position: relative;
+    background: white;
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.sg-image-edit-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(to right, #eef2ff, #f5f3ff);
+    border-bottom: 1px solid #e0e7ff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sg-image-edit-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.sg-image-edit-close-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sg-image-edit-close-btn:hover {
+    background: #f9fafb;
+    transform: scale(1.05);
+}
+
+.sg-image-edit-close-btn i {
+    color: #6b7280;
+}
+
+.sg-image-edit-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+/* 图片对比区 */
+.sg-image-comparison {
+    margin-bottom: 1.5rem;
+}
+
+.sg-image-compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.sg-image-compare-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.sg-image-compare-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sg-label-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #9ca3af;
+}
+
+.sg-label-dot.new {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.sg-image-compare-preview {
+    aspect-ratio: 4 / 3;
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    position: relative;
+}
+
+.sg-image-compare-preview.new {
+    background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+    border-color: #c7d2fe;
+}
+
+.sg-image-compare-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 生成中遮罩 */
+.sg-image-generating {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.sg-image-generating.hidden {
+    display: none;
+}
+
+.sg-generating-spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 4px solid #e0e7ff;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: sg-spin 1s linear infinite;
+}
+
+.sg-image-generating span {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #4b5563;
+}
+
+/* 输入区 */
+.sg-image-prompt-section {
+    margin-top: 0.5rem;
+}
+
+.sg-image-prompt-label {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.75rem;
+}
+
+.sg-image-prompt-textarea {
+    width: 100%;
+    height: 120px;
+    padding: 1rem;
+    border: 2px solid #d1d5db;
+    border-radius: 0.75rem;
+    font-size: 0.9375rem;
+    color: #374151;
+    resize: none;
+    transition: all 0.2s;
+    font-family: inherit;
+    line-height: 1.6;
+}
+
+.sg-image-prompt-textarea:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+}
+
+.sg-image-prompt-tip {
+    margin-top: 0.75rem;
+    font-size: 0.8125rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sg-image-prompt-tip i {
+    color: #eab308;
+}
+
+.sg-image-edit-footer {
+    padding: 1.25rem 1.5rem;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+/* 渐变按钮 */
+.sg-btn-gradient {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.sg-btn-gradient:hover {
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+    transform: translateY(-1px);
+}
+
+/* 成功按钮 */
+.sg-btn-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.sg-btn-success:hover {
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    transform: translateY(-1px);
+}
+
+/* 抖动动画 */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+
+.shake-animation {
+    animation: shake 0.3s ease-in-out;
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1) !important;
+}
+
+
+/* ==================== 敏感词失败样式 ==================== */
+
+/* 敏感词失败卡片 */
+.sg-page-card.sensitive {
+    border-color: #fbbf24;
+}
+
+.sg-page-card.sensitive .sg-card-info {
+    background-color: white;
+}
+
+.sg-page-card.sensitive:hover {
+    border-color: #f59e0b;
+}
+
+/* 敏感词失败图标和文字 */
+.sg-status-icon.sensitive {
+    color: #f59e0b;
+}
+
+.sg-status-text.sensitive {
+    color: #b45309;
+    font-weight: 500;
+}
+
+/* 修改提示词按钮 */
+.sg-edit-prompt-btn {
+    margin-top: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    background-color: #f59e0b;
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.sg-edit-prompt-btn:hover {
+    background-color: #d97706;
+}
+
+/* 敏感词警告提示 */
+.sg-sensitive-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background-color: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    color: #92400e;
+    font-size: 0.875rem;
+}
+
+.sg-sensitive-warning.hidden {
+    display: none;
+}
+
+.sg-sensitive-warning i {
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+
+/* 提示词编辑弹窗容器 */
+.sg-prompt-edit-container {
+    max-width: 550px;
+}
+
+/* 提示词编辑提示 */
+.sg-prompt-edit-tip {
+    margin-top: 0.75rem;
+    font-size: 0.8125rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sg-prompt-edit-tip i {
+    color: #eab308;
+}
+
+
+/* ==================== 分段提示词编辑弹窗样式 ==================== */
+
+/* 大尺寸弹窗容器 */
+.sg-prompt-edit-container-large {
+    max-width: 700px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 内容区可滚动 */
+.sg-prompt-edit-content {
+    overflow-y: auto;
+    max-height: calc(90vh - 140px);
+}
+
+/* 提示词分段区块 */
+.sg-prompt-section {
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+}
+
+/* 区块头部 */
+.sg-prompt-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 0.875rem;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* 区块标题 */
+.sg-prompt-section-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* 区块标签 */
+.sg-prompt-section-tag {
+    font-size: 0.6875rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 1rem;
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.sg-prompt-section-tag.unique {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+/* 区块文本框 */
+.sg-prompt-section-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    font-size: 0.8125rem;
+    color: #374151;
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+    line-height: 1.6;
+    background-color: white;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.sg-prompt-section-textarea:focus {
+    outline: none;
+    background-color: #fefce8;
+}
+
+.sg-prompt-section-textarea.shake-animation {
+    animation: shake 0.3s ease-in-out;
+    background-color: #fef2f2;
+}
+
+/* 提示信息样式调整 */
+.sg-prompt-edit-content .sg-prompt-edit-tip {
+    margin-top: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    background-color: #f0f9ff;
+    border-radius: 0.5rem;
+    border: 1px solid #bae6fd;
+}
+
+.sg-prompt-edit-content .sg-prompt-edit-tip i {
+    color: #0284c7;
+}
+
+.sg-prompt-edit-content .sg-prompt-edit-tip span {
+    color: #0369a1;
+}

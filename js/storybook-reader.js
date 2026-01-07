@@ -213,7 +213,7 @@ class StorybookReader {
                             <span>编辑文字</span>
                         </button>
                         
-                        <div id="storybookText" class="text-gray-800 text-2xl leading-relaxed space-y-4">
+                        <div id="storybookText" class="text-gray-800 text-4xl leading-relaxed space-y-4">
                             故事内容将在这里显示...
                         </div>
                         

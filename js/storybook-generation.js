@@ -67,6 +67,14 @@ class StorybookGeneration {
             totalPages: 0
         };
         
+        // 序列帧动画配置
+        this.loadingAnimation = {
+            frameCount: 121,
+            currentFrame: 0,
+            interval: null,
+            fps: 30
+        };
+        
         this.init();
     }
 
@@ -107,10 +115,7 @@ class StorybookGeneration {
                 <!-- 头部 -->
                 <div class="sg-header">
                     <div class="sg-header-left">
-                        <button class="sg-close-btn" id="sgCloseBtn">
-                            <i data-lucide="x" class="w-5 h-5"></i>
-                            <span>关闭</span>
-                        </button>
+                        <!-- 左侧留空 -->
                     </div>
                     
                     <h2 class="sg-title">生成绘本</h2>
@@ -315,9 +320,6 @@ class StorybookGeneration {
      * 绑定事件
      */
     bindEvents() {
-        // 关闭按钮
-        document.getElementById('sgCloseBtn').addEventListener('click', () => this.close());
-        
         // 详情弹窗关闭
         document.getElementById('sgDetailCloseBtn').addEventListener('click', () => this.closeDetail());
         document.getElementById('sgDetailCancelBtn').addEventListener('click', () => this.closeDetail());
@@ -351,9 +353,36 @@ class StorybookGeneration {
     }
 
     /**
+     * 显示弹窗并直接跳到指定步骤
+     */
+    showAtStep(pages = [], step = 1) {
+        // 保存实例到全局，供菜单调用
+        window.sgInstance = this;
+        
+        this.pages = pages;
+        this.isGenerating = true;
+        this.currentStep = step;
+        
+        const modal = document.getElementById('sgModal');
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        this.renderHeaderButtons();
+        this.renderContent();
+        
+        // 点击其他地方关闭菜单
+        document.addEventListener('click', this.closeAllMenus.bind(this));
+        
+        if (window.lucide) lucide.createIcons();
+    }
+
+    /**
      * 关闭弹窗
      */
     close() {
+        // 停止动画
+        this.stopLoadingAnimation();
+        
         const modal = document.getElementById('sgModal');
         modal.classList.remove('active');
         document.body.style.overflow = '';
@@ -366,7 +395,7 @@ class StorybookGeneration {
      * 取消生成
      */
     async cancel() {
-        const confirmed = await showConfirm('确定要取消生成吗？已生成的内容将会丢失。', '取消确认', '确定取消');
+        const confirmed = await showConfirm('确定要取消生成吗？当前进度会保留，可随时继续。', '取消确认', '取消生成', '继续生成');
         if (confirmed) {
             this.isGenerating = false;
             this.close();
@@ -374,7 +403,7 @@ class StorybookGeneration {
                 this.onCancelCallback();
             }
             if (window.showToast) {
-                showToast('已取消生成', 'error');
+                showToast('已取消生成', 'info');
             }
         }
     }
@@ -390,23 +419,47 @@ class StorybookGeneration {
             container.innerHTML = `
                 <button class="sg-btn sg-btn-primary" id="sgReadBtn">
                     <i data-lucide="book-open" class="w-4 h-4"></i>
-                    开始阅读
+                    去阅读
+                </button>
+                
+                <!-- 分隔线 -->
+                <div class="w-px h-6 bg-gray-300"></div>
+                
+                <button class="p-2.5 bg-transparent hover:bg-gray-100 text-gray-600 hover:text-gray-900 rounded-lg transition-all border border-gray-300" id="sgCloseBtn">
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             `;
             document.getElementById('sgReadBtn').addEventListener('click', () => this.startReading());
+            document.getElementById('sgCloseBtn').addEventListener('click', () => this.close());
         } else {
-            container.innerHTML = `
-                <button class="sg-btn sg-btn-secondary" id="sgBackgroundBtn">
-                    <i data-lucide="minimize-2" class="w-4 h-4"></i>
-                    后台生成
-                </button>
-                <button class="sg-btn sg-btn-danger" id="sgCancelBtn">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                    取消生成
-                </button>
-            `;
-            document.getElementById('sgBackgroundBtn').addEventListener('click', () => this.close());
-            document.getElementById('sgCancelBtn').addEventListener('click', () => this.cancel());
+            // 检查是否有正在生成的页面
+            const hasGeneratingPages = this.pages.some(p => p.imageStatus === 'generating');
+            // 分析大纲、生成脚本阶段（步骤1、2）也算正在生成中
+            const isGenerating = this.currentStep < 3 || hasGeneratingPages;
+            
+            if (isGenerating) {
+                // 正在生成中，显示"后台生成" + "取消生成"
+                container.innerHTML = `
+                    <button class="sg-btn sg-btn-secondary" id="sgBackgroundBtn">
+                        <i data-lucide="minimize-2" class="w-4 h-4"></i>
+                        后台生成
+                    </button>
+                    <button class="sg-btn sg-btn-danger" id="sgCancelBtn">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                        取消生成
+                    </button>
+                `;
+                document.getElementById('sgBackgroundBtn').addEventListener('click', () => this.close());
+                document.getElementById('sgCancelBtn').addEventListener('click', () => this.cancel());
+            } else {
+                // 没有正在生成的（生成失败/已取消状态），只显示"关闭"
+                container.innerHTML = `
+                    <button class="p-2.5 bg-transparent hover:bg-gray-100 text-gray-600 hover:text-gray-900 rounded-lg transition-all border border-gray-300" id="sgCloseBtn">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                `;
+                document.getElementById('sgCloseBtn').addEventListener('click', () => this.close());
+            }
         }
         
         if (window.lucide) lucide.createIcons();
@@ -447,25 +500,67 @@ class StorybookGeneration {
     renderContent() {
         const container = document.getElementById('sgContent');
         
-        // 时间线
-        let html = `<div class="sg-timeline">${this.renderTimelineHTML()}</div>`;
-        
         if (this.currentStep < 3) {
-            // 显示提示语
-            html += this.renderHintHTML();
+            // 步骤1、2：显示提示语
+            // 检查是否已有提示区域，如果有则只更新文案
+            const existingHintArea = container.querySelector('.sg-hint-area');
+            if (existingHintArea) {
+                this.updateHintText();
+                // 只更新时间线
+                const timeline = container.querySelector('.sg-timeline');
+                if (timeline) {
+                    timeline.innerHTML = this.renderTimelineHTML();
+                }
+            } else {
+                // 首次渲染，停止之前的动画
+                this.stopLoadingAnimation();
+                
+                let html = `<div class="sg-timeline">${this.renderTimelineHTML()}</div>`;
+                html += this.renderHintHTML();
+                container.innerHTML = html;
+                
+                // 启动序列帧动画
+                this.startLoadingAnimation();
+            }
         } else {
-            // 显示页面卡片
+            // 步骤3、4：显示页面卡片
+            this.stopLoadingAnimation();
+            
+            let html = `<div class="sg-timeline">${this.renderTimelineHTML()}</div>`;
             html += this.renderPagesGridHTML();
-        }
-        
-        container.innerHTML = html;
-        
-        // 绑定卡片事件
-        if (this.currentStep >= 3) {
+            container.innerHTML = html;
+            
             this.bindCardEvents(container);
         }
         
         if (window.lucide) lucide.createIcons();
+    }
+
+    /**
+     * 只更新提示文案（不重建动画）
+     */
+    updateHintText() {
+        let hint;
+        
+        if (this.currentStep === 2 && this.scriptProgress.phase !== 'default') {
+            const phaseConfig = this.scriptPhases[this.scriptProgress.phase];
+            if (phaseConfig) {
+                hint = {
+                    title: phaseConfig.title,
+                    desc: phaseConfig.desc.replace('{page}', this.scriptProgress.currentPage)
+                };
+            } else {
+                hint = this.hints[this.currentStep];
+            }
+        } else {
+            hint = this.hints[this.currentStep] || this.hints[1];
+        }
+        
+        const titleEl = document.querySelector('.sg-hint-title');
+        const descEl = document.querySelector('.sg-hint-desc');
+        
+        if (titleEl) titleEl.textContent = hint.title;
+        if (descEl) descEl.textContent = hint.desc;
     }
 
     /**
@@ -491,12 +586,10 @@ class StorybookGeneration {
             hint = this.hints[this.currentStep] || this.hints[1];
         }
         
-        const spinClass = hint.spinning ? 'spinning' : '';
-        
         return `
             <div class="sg-hint-area">
-                <div class="sg-hint-icon ${spinClass}">
-                    <i data-lucide="${hint.icon}"></i>
+                <div class="sg-hint-animation" id="sgLoadingAnimation">
+                    <img src="images/loading _256/合成2_00000.png" alt="loading" id="sgLoadingFrame">
                 </div>
                 <h3 class="sg-hint-title">${hint.title}</h3>
                 <p class="sg-hint-desc">${hint.desc}</p>
@@ -508,7 +601,23 @@ class StorybookGeneration {
      * 渲染页面卡片网格HTML
      */
     renderPagesGridHTML() {
-        let html = '<div class="sg-pages-wrapper"><div class="sg-pages-grid">';
+        // 检查是否有失败的页面
+        const hasFailedPages = this.pages.some(p => p.imageStatus === 'failed');
+        const hasGeneratingPages = this.pages.some(p => p.imageStatus === 'generating');
+        
+        let html = '<div class="sg-pages-wrapper">';
+        
+        // 如果有失败且没有正在生成的，显示提示
+        if (hasFailedPages && !hasGeneratingPages) {
+            html += `
+                <div class="sg-failed-tip">
+                    <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                    <span>部分失败，请排查处理</span>
+                </div>
+            `;
+        }
+        
+        html += '<div class="sg-pages-grid">';
         
         this.pages.forEach((page, index) => {
             html += this.renderPageCard(page, index);
@@ -572,11 +681,11 @@ class StorybookGeneration {
                     <div class="sg-menu-dropdown hidden" id="sgMenu_${index}">
                         <button class="sg-menu-item" onclick="event.stopPropagation(); window.sgInstance.editText(${index})">
                             <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            编辑文字
+                            修改文字
                         </button>
                         <button class="sg-menu-item" onclick="event.stopPropagation(); window.sgInstance.editImage(${index})">
                             <i data-lucide="image" class="w-4 h-4"></i>
-                            编辑图片
+                            修改图片
                         </button>
                     </div>
                 </div>
@@ -644,7 +753,7 @@ class StorybookGeneration {
                 </button>
                 <button class="sg-btn sg-btn-danger" id="sgCancelBtn">
                     <i data-lucide="x" class="w-4 h-4"></i>
-                    取消生成
+                    放弃生成
                 </button>
             `;
             document.getElementById('sgBackgroundBtn').addEventListener('click', () => this.close());
@@ -746,6 +855,50 @@ class StorybookGeneration {
     }
 
     /**
+     * 继续生成失败的页面
+     */
+    async continueGenerateFailedPages() {
+        // 找出所有失败的页面
+        const failedIndexes = [];
+        this.pages.forEach((page, index) => {
+            if (page.imageStatus === 'failed') {
+                // 检查是否是敏感词失败且未修改提示词
+                if (page.failReason === 'sensitive') {
+                    // 敏感词失败的跳过，提示用户先修改
+                    // 这里简化处理，实际可以弹窗提示
+                }
+                failedIndexes.push(index);
+            }
+        });
+        
+        if (failedIndexes.length === 0) {
+            if (window.showToast) {
+                showToast('没有需要重新生成的页面', 'info');
+            }
+            return;
+        }
+        
+        // 将失败的页面状态改为生成中
+        failedIndexes.forEach(index => {
+            this.pages[index].imageStatus = 'generating';
+            this.pages[index].failReason = null;
+            this.pages[index].failMessage = null;
+        });
+        
+        this.renderContent();
+        this.renderHeaderButtons();
+        
+        // 模拟逐个生成
+        for (const index of failedIndexes) {
+            await this.sleep(2000);
+            this.updatePageStatus(index, 'completed', this.pages[index].finalImageUrl);
+        }
+        
+        // 检查是否全部完成
+        this.checkAllCompleted();
+    }
+
+    /**
      * 设置当前步骤
      */
     setStep(step) {
@@ -769,7 +922,8 @@ class StorybookGeneration {
         this.scriptProgress.totalPages = totalPages;
         
         if (this.currentStep === 2) {
-            this.renderContent();
+            // 只更新文案，不重建整个内容
+            this.updateHintText();
         }
     }
 
@@ -986,13 +1140,11 @@ class StorybookGeneration {
         }
         
         // 步骤3：生成图片
-        this.setStep(3);
-        
-        // 所有图片先设为生成中
+        // 先把所有图片设为生成中，再切换步骤，避免按钮闪烁
         for (let i = 0; i < this.pages.length; i++) {
             this.pages[i].imageStatus = 'generating';
         }
-        this.renderContent();
+        this.setStep(3);
         
         // 逐个完成图片生成
         for (let i = 0; i < this.pages.length; i++) {
@@ -1020,6 +1172,127 @@ class StorybookGeneration {
         if (allCompleted) {
             this.setStep(4);
         }
+    }
+
+    /**
+     * 模拟继续生成流程（演示用）
+     * 直接跳到生成图片步骤，显示当前状态（有失败的页面），不自动开始生成
+     */
+    async simulateContinueGeneration() {
+        // 初始化页面数据，大部分已完成，有两张失败
+        this.pages = [
+            // 封面 - 已完成
+            {
+                narration: '丑小鸭的春天',
+                prompt: '丑小鸭的春天绘本封面，温馨的春天场景，儿童绘本风格',
+                imageStatus: 'completed',
+                imageUrl: 'images/丑小鸭的春天.png',
+                finalImageUrl: 'images/丑小鸭的春天.png'
+            },
+            // 第1页 - 已完成
+            {
+                narration: '春天来了，在温暖的芦苇丛里，鸭妈妈正在孵蛋。窝里的小家伙们都出来了，只有那颗最大、最特别的蛋还静悄悄的。',
+                prompt: '鸭妈妈在芦苇丛中孵蛋，温暖的春天，儿童绘本风格',
+                imageStatus: 'completed',
+                imageUrl: 'images/1.png',
+                finalImageUrl: 'images/1.png'
+            },
+            // 第2页 - 已完成
+            {
+                narration: '终于，那颗大蛋裂开了！出来的小鸭子和其他兄弟姐妹长得很不一样——他又大又灰，看起来很丑陋。',
+                prompt: '灰色的小鸭子从蛋壳中出来，其他小鸭子围观，儿童绘本风格',
+                imageStatus: 'completed',
+                imageUrl: 'images/2.png',
+                finalImageUrl: 'images/2.png'
+            },
+            // 第3页 - 已完成
+            {
+                narration: '"你真丑！"其他小鸭子们嘲笑着说。丑小鸭伤心极了，他觉得自己不属于这里。',
+                prompt: '丑小鸭被其他小鸭子嘲笑，伤心的表情，儿童绘本风格',
+                imageStatus: 'completed',
+                imageUrl: 'images/3.png',
+                finalImageUrl: 'images/3.png'
+            },
+            // 第4页 - 已完成
+            {
+                narration: '丑小鸭决定离开家，去寻找属于自己的地方。他走过田野，越过小溪，一路上遇到了很多动物。',
+                prompt: '丑小鸭独自走在田野上，背景是小溪和远方，儿童绘本风格',
+                imageStatus: 'completed',
+                imageUrl: 'images/4.png',
+                finalImageUrl: 'images/4.png'
+            },
+            // 第5页 - 失败（敏感词）
+            {
+                narration: '"你是什么动物？"农场里的鸡鸭们问道。"我也不知道..."丑小鸭低着头回答。大家都觉得他很奇怪。',
+                prompt: '丑小鸭（幼年）：一只灰褐色羽毛的小水禽，体型明显大于同窝雏鸭，喙宽而略钝，眼睛圆大呈深棕色，腿脚粗壮，走路时身体微微摇晃。羽毛蓬松无光泽，翅膀短小，整体轮廓笨拙。\n农场动物们：一群家禽和家畜组成的群体：包括红冠白羽的母鸡、黄褐色虎斑家猫、棕白相间的短毛家犬。它们站立或蹲坐在农场地面，面部朝向画面中心，表情带有轻蔑或好奇。\n场景：一个农家院落旁的浅水池塘，水面平静泛绿，岸边堆着金黄色干稻草，围有木质篱笆。背景可见低矮农舍屋顶和几棵果树。地面为压实的泥土，散落谷粒。\n画面：丑小鸭（幼年）在浅水中奋力划动双蹼，水花四溅打湿羽毛，身体歪斜几乎要摔倒。岸边，农场动物们——母鸡拍翅大笑、家猫捂嘴偷笑、家犬仰头狂吠——全都面向水面，表情夸张。\n日式卡通风：具有日本漫画或动画的特点，线条流畅，色彩清新。',
+                imageStatus: 'failed',
+                failReason: 'sensitive',
+                failMessage: '内容包含敏感词',
+                imageUrl: null,
+                finalImageUrl: 'images/5.png'
+            },
+            // 第6页 - 已完成
+            {
+                narration: '寒冷的冬天来了，丑小鸭在雪地里艰难地寻找食物。他又冷又饿，但依然没有放弃寻找自己真正的家。',
+                prompt: '丑小鸭在雪地中艰难前行，冬天的场景，儿童绘本风格',
+                imageStatus: 'completed',
+                imageUrl: 'images/6.png',
+                finalImageUrl: 'images/6.png'
+            },
+            // 第7页 - 已完成
+            {
+                narration: '一天，丑小鸭看到一群美丽的白天鹅在湖面上优雅地游着。"他们真美啊！"他羡慕地想。',
+                prompt: '丑小鸭远远望着湖面上的白天鹅群，羡慕的眼神，儿童绘本风格',
+                imageStatus: 'completed',
+                imageUrl: 'images/7.png',
+                finalImageUrl: 'images/7.png'
+            },
+            // 第8页 - 失败（其他原因）
+            {
+                narration: '"我多么希望能和他们一样美丽..."丑小鸭望着自己在水中的倒影，依然觉得自己很丑陋。',
+                prompt: '丑小鸭望着水中自己的倒影，忧伤的表情，儿童绘本风格',
+                imageStatus: 'failed',
+                failReason: 'error',
+                failMessage: '生成失败，请重试',
+                imageUrl: null,
+                finalImageUrl: 'images/8.png'
+            },
+            // 第9页 - 已完成
+            {
+                narration: '春天又来了！丑小鸭长大了很多。当他再次来到湖边时，惊讶地发现水中的倒影变了——',
+                prompt: '春天的湖边，丑小鸭惊讶地看着水中的倒影，儿童绘本风格',
+                imageStatus: 'completed',
+                imageUrl: 'images/9.png',
+                finalImageUrl: 'images/9.png'
+            },
+            // 第10页 - 已完成
+            {
+                narration: '"天哪！我变成了一只美丽的白天鹅！"丑小鸭简直不敢相信自己的眼睛。原来他从来就不是丑小鸭，而是一只天鹅宝宝！',
+                prompt: '美丽的白天鹅看着水中自己的倒影，惊喜的表情，儿童绘本风格',
+                imageStatus: 'completed',
+                imageUrl: 'images/10.png',
+                finalImageUrl: 'images/10.png'
+            },
+            // 第11页 - 已完成
+            {
+                narration: '其他天鹅们热情地欢迎他："欢迎回家，美丽的天鹅！"丑小鸭终于找到了属于自己的家庭。',
+                prompt: '白天鹅群欢迎新成员，温馨的场景，儿童绘本风格',
+                imageStatus: 'completed',
+                imageUrl: 'images/11.png',
+                finalImageUrl: 'images/11.png'
+            },
+            // 第12页 - 已完成
+            {
+                narration: '从此以后，这只曾经的"丑小鸭"和天鹅伙伴们快乐地生活在一起。他明白了：每个人都有自己独特的美丽，只要耐心等待，春天总会到来。',
+                prompt: '白天鹅们在湖面上快乐地游泳，阳光明媚，儿童绘本风格',
+                imageStatus: 'completed',
+                imageUrl: 'images/12.png',
+                finalImageUrl: 'images/12.png'
+            }
+        ];
+        
+        // 直接显示步骤3，不自动开始生成
+        this.showAtStep(this.pages, 3);
     }
 
     /**
@@ -1062,7 +1335,7 @@ class StorybookGeneration {
         const titleEl = document.getElementById('sgTextEditTitle');
         const textArea = document.getElementById('sgTextEditArea');
         
-        titleEl.textContent = isCover ? '编辑封面文字' : `编辑第${index}页文字`;
+        titleEl.textContent = isCover ? '修改封面文字' : `修改第${index}页文字`;
         textArea.value = page.narration || '';
         
         modal.classList.add('active');
@@ -1117,7 +1390,7 @@ class StorybookGeneration {
         const rejectBtn = document.getElementById('sgRejectImageBtn');
         const modalBackdrop = document.getElementById('sgImageEditBackdrop');
         
-        titleEl.textContent = isCover ? '微调封面图片' : `微调第${index}页图片`;
+        titleEl.textContent = isCover ? '修改封面图片' : `修改第${index}页图片`;
         originalPreview.src = page.imageUrl || '';
         promptInput.value = '';
         
@@ -1381,6 +1654,31 @@ class StorybookGeneration {
             
             this.closePromptEditModal();
             this.regeneratePage(pageIndex); // 使用保存的索引
+        }
+    }
+
+    /**
+     * 启动序列帧动画
+     */
+    startLoadingAnimation() {
+        const frameImg = document.getElementById('sgLoadingFrame');
+        if (!frameImg) return;
+        
+        this.loadingAnimation.currentFrame = 0;
+        this.loadingAnimation.interval = setInterval(() => {
+            this.loadingAnimation.currentFrame = (this.loadingAnimation.currentFrame + 1) % this.loadingAnimation.frameCount;
+            const frameNum = String(this.loadingAnimation.currentFrame).padStart(5, '0');
+            frameImg.src = `images/loading _256/合成2_${frameNum}.png`;
+        }, 1000 / this.loadingAnimation.fps);
+    }
+
+    /**
+     * 停止序列帧动画
+     */
+    stopLoadingAnimation() {
+        if (this.loadingAnimation.interval) {
+            clearInterval(this.loadingAnimation.interval);
+            this.loadingAnimation.interval = null;
         }
     }
 

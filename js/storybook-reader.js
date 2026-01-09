@@ -79,10 +79,9 @@ class StorybookReader {
         <div id="storybookViewer" class="fixed inset-0 bg-black/90 z-[200] hidden">
             <!-- 顶部工具栏 -->
             <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm relative">
-                <button id="closeReaderBtn" onclick="window.storybookReader.close()" class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                    <span class="font-medium">关闭</span>
-                </button>
+                <div>
+                    <!-- 左侧留空 -->
+                </div>
                 
                 <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3">
                     <h2 id="storybookTitle" class="text-xl font-bold text-gray-800 whitespace-nowrap">绘本标题</h2>
@@ -90,14 +89,14 @@ class StorybookReader {
                 
                 <div class="flex items-center gap-3">
                     <!-- 播放/暂停按钮 -->
-                    <button id="playPauseBtn" onclick="window.storybookReader.togglePlay()" class="flex items-center gap-1.5 px-4 py-1.5 bg-[#c2e7ff] hover:bg-[#a8d8f0] text-[#001d35] rounded-full text-sm font-medium transition-all shadow-sm">
+                    <button id="playPauseBtn" onclick="window.storybookReader.togglePlay()" class="flex items-center gap-1.5 px-4 py-2 bg-[#c2e7ff] hover:bg-[#a8d8f0] text-[#001d35] rounded-full text-sm font-medium transition-all shadow-sm">
                         <i id="playPauseIcon" data-lucide="play" class="w-4 h-4"></i>
                         <span id="playPauseText">Listen</span>
                     </button>
                     
                     <!-- 音色选择器 -->
                     <div class="relative">
-                        <button id="voiceSelectBtn" onclick="window.storybookReader.toggleVoiceMenu()" class="flex items-center gap-1.5 px-4 py-1.5 bg-[#c2e7ff] hover:bg-[#a8d8f0] text-[#001d35] rounded-full text-sm font-medium transition-all shadow-sm">
+                        <button id="voiceSelectBtn" onclick="window.storybookReader.toggleVoiceMenu()" class="flex items-center gap-1.5 px-4 py-2 bg-[#c2e7ff] hover:bg-[#a8d8f0] text-[#001d35] rounded-full text-sm font-medium transition-all shadow-sm">
                             <i data-lucide="music" class="w-4 h-4"></i>
                             <span id="currentVoiceText">温柔女声</span>
                             <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
@@ -125,21 +124,23 @@ class StorybookReader {
                     </div>
                     
                     <!-- 下载PDF按钮 -->
-                    <button id="downloadPDFBtn" onclick="window.storybookReader.downloadPDF()" class="flex items-center gap-1.5 px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button id="downloadPDFBtn" onclick="window.storybookReader.downloadPDF()" class="flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                         <i id="downloadPDFIcon" data-lucide="download" class="w-4 h-4"></i>
                         <span id="downloadPDFText">下载PDF</span>
                     </button>
                     
-                    <!-- 退出编辑按钮 - 只在编辑模式显示 -->
-                    <button id="finishEditBtn" onclick="window.storybookReader.toggleEditMode()" class="hidden flex items-center gap-1.5 px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-full text-sm font-medium transition-all shadow-sm">
-                        <i data-lucide="check" class="w-4 h-4"></i>
-                        <span>退出编辑</span>
-                    </button>
-                    
-                    <!-- 进入编辑模式按钮 -->
-                    <button id="enterEditModeBtn" onclick="window.storybookReader.toggleEditMode()" class="flex items-center gap-1.5 px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-all shadow-sm">
+                    <!-- 编辑按钮 -->
+                    <button id="enterEditModeBtn" onclick="window.storybookReader.openEditor()" class="flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-all shadow-sm">
                         <i data-lucide="pencil" class="w-4 h-4"></i>
                         <span>编辑</span>
+                    </button>
+                    
+                    <!-- 分隔线 -->
+                    <div class="w-px h-6 bg-gray-300"></div>
+                    
+                    <!-- 关闭按钮 -->
+                    <button id="closeReaderBtn" onclick="window.storybookReader.close()" class="p-2.5 bg-transparent hover:bg-gray-100 text-gray-600 hover:text-gray-900 rounded-lg transition-all border border-gray-300">
+                        <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
             </header>
@@ -166,12 +167,6 @@ class StorybookReader {
                         0 25px 50px -12px rgba(0, 0, 0, 0.25),
                         /* 右侧内部阴影 - 模拟页面弯曲 */
                         inset -12px 0 15px -8px rgba(0, 0, 0, 0.25);">
-                        <!-- 编辑图片按钮 - 右上角 -->
-                        <button id="editImageBtn" onclick="window.storybookReader.startImageEdit()" class="hidden absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-2 bg-white/90 hover:bg-white text-gray-700 hover:text-orange-600 border border-gray-300 hover:border-orange-400 rounded-lg text-sm font-medium transition-all shadow-lg hover:shadow-xl">
-                            <i data-lucide="image" class="w-4 h-4"></i>
-                            <span>编辑图片</span>
-                        </button>
-                        
                         <!-- 加载动画 -->
                         <div id="imageLoader" class="absolute inset-0 flex items-center justify-center bg-gray-50">
                             <div class="flex flex-col items-center gap-3">
@@ -207,13 +202,8 @@ class StorybookReader {
                       2px 2px,
                       200px 200px,
                       300px 300px;">
-                        <!-- 编辑文字按钮 - 右上角 -->
-                        <button id="editTextBtn" onclick="window.storybookReader.startTextEdit()" class="hidden absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-2 bg-white/90 hover:bg-white text-gray-700 hover:text-blue-600 border border-gray-300 hover:border-blue-400 rounded-lg text-sm font-medium transition-all shadow-lg hover:shadow-xl">
-                            <i data-lucide="type" class="w-4 h-4"></i>
-                            <span>编辑文字</span>
-                        </button>
                         
-                        <div id="storybookText" class="text-gray-800 text-4xl leading-relaxed space-y-4">
+                        <div id="storybookText" class="text-gray-800 text-4xl leading-relaxed space-y-4" style="font-family: 'KaiTi', 'STKaiti', '楷体', 'Kaiti SC', serif;">
                             故事内容将在这里显示...
                         </div>
                         
@@ -416,6 +406,35 @@ class StorybookReader {
         viewer.classList.add('hidden');
         document.body.style.overflow = '';
         this.currentBookData = null;
+    }
+
+    // 打开编辑器
+    openEditor() {
+        if (!this.currentBookData) return;
+        
+        // 准备页面数据
+        const pages = this.currentBookData.pages.map(page => ({
+            imageUrl: page.image,
+            narration: page.text
+        }));
+        
+        // 创建编辑器实例
+        const editor = new StorybookEditor();
+        editor.onClose((updatedPages) => {
+            console.log('编辑完成，更新后的页面数据：', updatedPages);
+            // 更新当前绘本数据
+            updatedPages.forEach((updatedPage, index) => {
+                if (this.currentBookData.pages[index]) {
+                    this.currentBookData.pages[index].image = updatedPage.imageUrl;
+                    this.currentBookData.pages[index].text = updatedPage.narration;
+                }
+            });
+            // 刷新当前页面显示
+            this.showPage(this.currentPage, false);
+        });
+        
+        // 显示编辑器（阅读器不关闭）
+        editor.show(pages);
     }
 
     // 显示指定页(带平滑过渡)

@@ -1,29 +1,38 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的绘本 - AI绘本</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://registry.npmmirror.com/lucide/latest/files/dist/umd/lucide.js"></script>
-    
+
     <!-- 侧边栏菜单组件 -->
     <link rel="stylesheet" href="css/sidebar-menu.css">
     <script src="js/sidebar-menu.js"></script>
-    
+
     <!-- 绘本阅读器模块 -->
     <script src="js/storybook-reader.js"></script>
-    
+
     <!-- 大纲确认模态窗口组件 -->
     <link rel="stylesheet" href="css/outline-modal.css">
     <script src="js/outline-modal.js"></script>
-    
+
     <!-- 生成进度窗口组件 -->
     <script src="js/generation-progress.js"></script>
-    
+
+    <!-- 绘本生成组件（新） -->
+    <link rel="stylesheet" href="css/storybook-generation.css">
+    <script src="js/storybook-generation.js"></script>
+
+    <!-- 绘本编辑组件 -->
+    <link rel="stylesheet" href="css/storybook-editor.css">
+    <script src="js/storybook-editor.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -46,19 +55,22 @@
             }
         }
     </script>
-    
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
         }
 
         /* 状态指示器动画 */
         @keyframes pulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 opacity: 1;
             }
+
             50% {
                 opacity: .5;
             }
@@ -80,7 +92,7 @@
         }
 
         /* 首页风格样式 - 图片和文字分离 */
-        
+
         /* 面包屑导航样式 */
         .breadcrumb {
             display: flex;
@@ -89,24 +101,24 @@
             font-size: 14px;
             color: #9ca3af;
         }
-        
+
         .breadcrumb a {
             color: #6b7280;
             text-decoration: none;
             transition: all 0.2s;
             border-bottom: 1px solid transparent;
         }
-        
+
         .breadcrumb a:hover {
             color: #374151;
             border-bottom-color: #374151;
         }
-        
+
         .breadcrumb .separator {
             color: #d1d5db;
             margin: 0 4px;
         }
-        
+
         .breadcrumb .current {
             color: #1f2937;
             font-weight: 600;
@@ -119,7 +131,8 @@
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div class="px-6 py-3 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
+                <div
+                    class="w-9 h-9 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
                     <i data-lucide="sparkles" class="w-4 h-4"></i>
                 </div>
                 <span class="text-base font-semibold text-gray-800">兆涵科技</span>
@@ -129,29 +142,34 @@
             <div id="userSection">
                 <!-- 未登录状态 -->
                 <div id="notLoggedIn">
-                    <button onclick="goToLogin()" class="px-5 py-2 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white text-sm rounded-lg font-medium shadow-sm hover:shadow-md transition-all">
+                    <button onclick="goToLogin()"
+                        class="px-5 py-2 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white text-sm rounded-lg font-medium shadow-sm hover:shadow-md transition-all">
                         登录
                     </button>
                 </div>
-                
+
                 <!-- 已登录状态（默认隐藏） -->
                 <div id="loggedIn" class="hidden relative">
-                    <div class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors" onclick="toggleUserMenu()">
-                        <div class="w-7 h-7 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold" id="userAvatar">
+                    <div class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors"
+                        onclick="toggleUserMenu()">
+                        <div class="w-7 h-7 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                            id="userAvatar">
                             A
                         </div>
                         <span class="text-sm text-gray-700 font-medium" id="userNickname">Admin</span>
                         <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
                     </div>
-                    
+
                     <!-- 用户菜单下拉 -->
-                    <div id="userMenu" class="hidden absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+                    <div id="userMenu"
+                        class="hidden absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
                         <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors">
                             <i data-lucide="settings" class="w-4 h-4 text-gray-500"></i>
                             <span class="text-sm text-gray-700">账号设置</span>
                         </a>
                         <div class="border-t border-gray-100 my-2"></div>
-                        <a href="#" onclick="handleLogout(event)" class="flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 transition-colors">
+                        <a href="#" onclick="handleLogout(event)"
+                            class="flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 transition-colors">
                             <i data-lucide="log-out" class="w-4 h-4 text-red-500"></i>
                             <span class="text-sm text-red-600">退出登录</span>
                         </a>
@@ -167,54 +185,49 @@
     <!-- 主容器 -->
     <div class="px-6 py-4 relative">
         <div class="max-w-[1400px] mx-auto">
-        <!-- 面包屑导航 -->
-        <div class="breadcrumb mb-3">
-            <a href="home.html">AI绘本</a>
-            <span class="separator">›</span>
-            <span class="current">我的绘本</span>
-        </div>
-
-        <!-- 页面标题 -->
-        <div class="mb-8 flex items-center justify-between">
-            <h1 class="text-2xl font-semibold text-gray-900">
-                我的绘本
-            </h1>
-
-        </div>
-
-        <!-- 绘本网格 -->
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6" id="booksGrid">
-            <!-- 绘本卡片将通过JavaScript动态生成 -->
-        </div>
-
-        <!-- 空状态 -->
-        <div id="emptyState" class="text-center py-16 hidden">
-            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="book-open" class="w-12 h-12 text-gray-400"></i>
+            <!-- 面包屑导航 -->
+            <div class="breadcrumb mb-3">
+                <a href="home.html">AI绘本</a>
+                <span class="separator">›</span>
+                <span class="current">我的绘本</span>
             </div>
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">还没有绘本</h3>
-            <p class="text-gray-500 mb-6">开始创作您的第一本AI绘本吧！</p>
-            <button onclick="createNewBook()" class="px-6 py-3 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all">
-                创建绘本
-            </button>
-        </div>
 
-        <!-- 分页组件 -->
-        <div id="paginationContainer" class="flex justify-center items-center gap-2 mt-8 mb-4">
-            <!-- 分页按钮将通过JavaScript动态生成 -->
-        </div>
+            <!-- 绘本网格 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6" id="booksGrid">
+                <!-- 绘本卡片将通过JavaScript动态生成 -->
+            </div>
+
+            <!-- 空状态 -->
+            <div id="emptyState" class="text-center py-16 hidden">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="book-open" class="w-12 h-12 text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">还没有绘本</h3>
+                <p class="text-gray-500 mb-6">开始创作您的第一本AI绘本吧！</p>
+                <button onclick="createNewBook()"
+                    class="px-6 py-3 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all">
+                    创建绘本
+                </button>
+            </div>
+
+            <!-- 分页组件 -->
+            <div id="paginationContainer" class="flex justify-center items-center gap-2 mt-8 mb-4">
+                <!-- 分页按钮将通过JavaScript动态生成 -->
+            </div>
         </div>
     </div>
 
     <!-- Toast 提示 -->
-    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl z-[100] opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3">
+    <div id="toast"
+        class="fixed top-20 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl z-[100] opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3">
         <i id="toastIcon" data-lucide="check-circle" class="w-5 h-5"></i>
         <span id="toastMessage">操作成功</span>
     </div>
 
     <!-- Confirm 确认对话框 -->
     <div id="confirmModal" class="fixed inset-0 bg-black/50 z-[300] hidden flex items-center justify-center">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all scale-95 opacity-0" id="confirmDialog">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all scale-95 opacity-0"
+            id="confirmDialog">
             <div class="p-6">
                 <div class="flex items-start gap-4">
                     <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
@@ -227,10 +240,14 @@
                 </div>
             </div>
             <div class="border-t border-gray-100 p-4 flex gap-3 justify-end">
-                <button onclick="closeConfirm(false)" class="px-5 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all">
+                <button onclick="closeConfirm(false)"
+                    class="px-5 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all"
+                    id="confirmCancelButton">
                     取消
                 </button>
-                <button onclick="closeConfirm(true)" class="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-all" id="confirmButton">
+                <button onclick="closeConfirm(true)"
+                    class="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-all"
+                    id="confirmButton">
                     确定
                 </button>
             </div>
@@ -239,41 +256,43 @@
 
     <script>
         // ========== 自定义对话框组件 ==========
-        
+
         let confirmCallback = null;
-        
+
         // 自定义 Confirm 对话框
-        function showConfirm(message, title = '确认操作', confirmText = '确定') {
+        function showConfirm(message, title = '确认操作', confirmText = '确定', cancelText = '取消') {
             return new Promise((resolve) => {
                 const modal = document.getElementById('confirmModal');
                 const dialog = document.getElementById('confirmDialog');
                 const titleEl = document.getElementById('confirmTitle');
                 const messageEl = document.getElementById('confirmMessage');
                 const confirmBtn = document.getElementById('confirmButton');
-                
+                const cancelBtn = document.getElementById('confirmCancelButton');
+
                 titleEl.textContent = title;
                 messageEl.textContent = message;
                 confirmBtn.textContent = confirmText;
-                
+                if (cancelBtn) cancelBtn.textContent = cancelText;
+
                 confirmCallback = resolve;
-                
+
                 modal.classList.remove('hidden');
                 setTimeout(() => {
                     dialog.classList.remove('scale-95', 'opacity-0');
                     dialog.classList.add('scale-100', 'opacity-100');
                 }, 10);
-                
+
                 lucide.createIcons();
             });
         }
-        
+
         function closeConfirm(result) {
             const modal = document.getElementById('confirmModal');
             const dialog = document.getElementById('confirmDialog');
-            
+
             dialog.classList.add('scale-95', 'opacity-0');
             dialog.classList.remove('scale-100', 'opacity-100');
-            
+
             setTimeout(() => {
                 modal.classList.add('hidden');
                 if (confirmCallback) {
@@ -295,8 +314,8 @@
                     ...options
                 };
                 this.isOpen = false;
-                this.onClose = options.onClose || (() => {});
-                this.onCreate = options.onCreate || (() => {});
+                this.onClose = options.onClose || (() => { });
+                this.onCreate = options.onCreate || (() => { });
             }
 
             // 创建模态窗口HTML
@@ -337,7 +356,7 @@
             // 设置事件监听器
             setupEventListeners() {
                 const modal = document.getElementById(this.modalId);
-                
+
                 // 点击外部关闭
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal && this.options.closable) {
@@ -349,7 +368,7 @@
             // 打开模态窗口
             open(title, content) {
                 this.createModal();
-                
+
                 const modal = document.getElementById(this.modalId);
                 const titleElement = document.getElementById(`${this.modalId}Title`);
                 const contentElement = document.getElementById(`${this.modalId}Content`);
@@ -360,7 +379,7 @@
                 modal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
                 this.isOpen = true;
-                
+
                 // 重新初始化图标
                 lucide.createIcons();
             }
@@ -423,50 +442,50 @@
         lucide.createIcons();
 
         // ========== 登录状态管理 ==========
-        
+
         // 检查登录状态（写死为已登录状态）
         function checkLoginStatus() {
             // 强制显示已登录状态
             document.getElementById('notLoggedIn').classList.add('hidden');
             document.getElementById('loggedIn').classList.remove('hidden');
-            
+
             // 使用固定的用户信息
             const nickname = '张三';
-            
+
             // 更新用户信息
             document.getElementById('userNickname').textContent = nickname;
-            
+
             // 更新头像（取昵称首字母）
             const firstLetter = nickname.charAt(0).toUpperCase();
             document.getElementById('userAvatar').textContent = firstLetter;
-            
+
             lucide.createIcons();
         }
-        
+
         // 页面加载时检查登录状态
         checkLoginStatus();
-        
+
         // 跳转到登录页
         function goToLogin() {
             window.location.href = 'login.html?return=' + encodeURIComponent(window.location.pathname);
         }
-        
+
         // 切换用户菜单
         function toggleUserMenu() {
             const userMenu = document.getElementById('userMenu');
             userMenu.classList.toggle('hidden');
         }
-        
+
         // 点击其他地方关闭用户菜单
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             const userMenu = document.getElementById('userMenu');
             const loggedIn = document.getElementById('loggedIn');
-            
+
             if (loggedIn && !loggedIn.contains(e.target)) {
                 userMenu.classList.add('hidden');
             }
         });
-        
+
         // 退出登录（原型中禁用此功能）
         function handleLogout(event) {
             event.preventDefault();
@@ -479,7 +498,7 @@
 
         // 初始化生成进度窗口组件
         const generationProgress = new GenerationProgress();
-        
+
         // 设置取消回调
         generationProgress.onCancel((bookId) => {
             console.log('用户取消了生成，绘本 ID:', bookId);
@@ -528,17 +547,29 @@
                 pages: 15,
                 progress: 45
             },
-            // 第4本 - 异常状态：生成失败
+            // 第4本 - 生成失败（生图阶段，有封面）
             {
                 id: 13,
                 title: "彩虹桥的传说",
                 status: "failed",
                 createdAt: "2024-01-03",
                 updatedAt: "2024-01-03",
+                coverImage: "images/守株待兔.png",
+                pages: 12,
+                progress: 60,
+                errorMessage: "部分图片生成失败"
+            },
+            // 第5本 - 生成失败（脚本阶段，无封面）
+            {
+                id: 15,
+                title: "勇敢的小狮子",
+                status: "failed",
+                createdAt: "2024-01-02",
+                updatedAt: "2024-01-02",
                 coverImage: null,
                 pages: 0,
                 progress: 0,
-                errorMessage: "图片生成失败，请重试"
+                errorMessage: "脚本生成失败，请重试"
             },
             // 第5-13本 - 已完成（剩余9本第一轮）
             {
@@ -571,13 +602,24 @@
                 pages: 6,
                 progress: 100
             },
-            // 第5本 - 异常状态：已取消
+            // 已取消（生图阶段，有封面）
             {
                 id: 14,
                 title: "星空下的梦想",
                 status: "cancelled",
                 createdAt: "2024-01-02",
                 updatedAt: "2024-01-02",
+                coverImage: "images/狐假虎威.png",
+                pages: 12,
+                progress: 50
+            },
+            // 已取消（脚本阶段，无封面）
+            {
+                id: 16,
+                title: "小熊的蜂蜜罐",
+                status: "cancelled",
+                createdAt: "2024-01-01",
+                updatedAt: "2024-01-01",
                 coverImage: null,
                 pages: 0,
                 progress: 0
@@ -750,11 +792,11 @@
         const itemsPerPage = 20;
 
         // 页面加载时渲染绘本
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             renderBooks();
-            
+
             // 点击外部关闭所有更多操作菜单
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', function (e) {
                 // 如果点击的不是更多操作按钮或菜单，则关闭所有菜单
                 if (!e.target.closest('[id^="moreOptions-"]') && !e.target.closest('button[onclick*="toggleMoreOptions"]')) {
                     const allMenus = document.querySelectorAll('[id^="moreOptions-"]');
@@ -770,7 +812,7 @@
         function renderBooks() {
             const grid = document.getElementById('booksGrid');
             const emptyState = document.getElementById('emptyState');
-            
+
             if (booksData.length === 0) {
                 grid.classList.add('hidden');
                 emptyState.classList.remove('hidden');
@@ -798,14 +840,14 @@
         // 渲染分页组件
         function renderPagination(totalPages) {
             const container = document.getElementById('paginationContainer');
-            
+
             if (totalPages <= 1) {
                 container.classList.add('hidden');
                 return;
             }
 
             container.classList.remove('hidden');
-            
+
             let paginationHTML = '';
 
             // 上一页按钮
@@ -826,9 +868,9 @@
                     paginationHTML += `
                         <button 
                             onclick="changePage(${i})" 
-                            class="px-4 py-2 rounded-lg border transition-all ${i === currentPage 
-                                ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white border-primary-500' 
-                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'}"
+                            class="px-4 py-2 rounded-lg border transition-all ${i === currentPage
+                            ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white border-primary-500'
+                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'}"
                         >
                             ${i}
                         </button>
@@ -857,10 +899,10 @@
         function changePage(page) {
             const totalPages = Math.ceil(booksData.length / itemsPerPage);
             if (page < 1 || page > totalPages) return;
-            
+
             currentPage = page;
             renderBooks();
-            
+
             // 滚动到顶部
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -868,10 +910,9 @@
         // 创建绘本卡片（首页风格）
         function createBookCard(book) {
             const statusConfig = getStatusConfig(book.status);
-            
+
             // 根据状态决定点击行为
             let clickHandler;
-            const isClickable = !(book.status === 'failed' || book.status === 'cancelled');
             switch (book.status) {
                 case 'completed':
                     clickHandler = `onclick="readBookDirectly(${book.id})"`;
@@ -881,8 +922,8 @@
                     break;
                 case 'failed':
                 case 'cancelled':
-                    // 失败和已取消状态点击无效
-                    clickHandler = '';
+                    // 失败和已取消状态：根据是否有封面决定打开哪个界面
+                    clickHandler = `onclick="openFailedOrCancelledBook(${book.id})"`;
                     break;
                 case 'generating':
                     clickHandler = `onclick="viewProgress(${book.id})"`;
@@ -890,18 +931,18 @@
                 default:
                     clickHandler = `onclick="openBookDetail(${book.id})"`;
             }
-            
+
             return `
-                <div class="group ${isClickable ? 'cursor-pointer' : 'cursor-default'}" ${isClickable ? clickHandler : ''}>
+                <div class="group cursor-pointer" ${clickHandler}>
                     <!-- 图片容器 -->
                     <div class="relative">
                         <div class="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                            ${book.coverImage 
-                                ? `<img src="${book.coverImage}" alt="${book.title}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">`
-                                : `<div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                            ${book.coverImage
+                    ? `<img src="${book.coverImage}" alt="${book.title}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">`
+                    : `<div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                                     <i data-lucide="${getPlaceholderIcon(book.status)}" class="w-16 h-16 text-gray-400"></i>
                                    </div>`
-                            }
+                }
                         </div>
 
                         <!-- 状态徽章（叠加在图片上，已完成状态不显示） -->
@@ -916,8 +957,8 @@
 
                         <!-- 更多操作按钮（叠加在图片上） -->
                         <div class="absolute top-3 right-3 z-10">
-                            <div class="relative" onmouseenter="showMoreOptions(${book.id})" onmouseleave="hideMoreOptions(${book.id})">
-                                <button onclick="event.stopPropagation(); toggleMoreOptions(${book.id})" class="w-8 h-8 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all opacity-0 group-hover:opacity-100">
+                            <div class="relative">
+                                <button onclick="event.stopPropagation(); toggleMoreOptions(${book.id})" class="w-8 h-8 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all">
                                     <i data-lucide="more-horizontal" class="w-4 h-4 text-gray-600"></i>
                                 </button>
                                 
@@ -1001,7 +1042,13 @@
             // 根据状态添加不同的操作
             switch (book.status) {
                 case 'completed':
-                    // 已完成状态不显示额外操作，只保留删除按钮
+                    // 已完成状态显示编辑按钮
+                    menuItems.push(`
+                        <button onclick="event.stopPropagation(); editBook(${book.id})" class="w-full px-3 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-2">
+                            <i data-lucide="edit-3" class="w-3 h-3"></i>
+                            编辑
+                        </button>
+                    `);
                     break;
 
                 case 'draft':
@@ -1019,12 +1066,7 @@
 
                 case 'failed':
                 case 'cancelled':
-                    menuItems.push(`
-                        <button onclick="event.stopPropagation(); openOutlineConfirm(${book.id})" class="w-full px-3 py-2 text-left text-sm text-primary-600 hover:bg-primary-50 transition-colors flex items-center gap-2">
-                            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
-                            重新生成
-                        </button>
-                    `);
+                    // 失败和已取消状态不显示继续生成按钮，只保留删除
                     break;
             }
 
@@ -1048,11 +1090,11 @@
             const now = new Date();
             const diffTime = Math.abs(now - date);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
+
             if (diffDays === 1) return '今天';
             if (diffDays === 2) return '昨天';
             if (diffDays <= 7) return `${diffDays}天前`;
-            
+
             return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
         }
 
@@ -1083,7 +1125,7 @@
 
             // 转换书籍数据为大纲模态窗口需要的格式
             const storyData = convertBookToStoryData(book);
-            
+
             if (window.myBooksOutlineModal) {
                 window.myBooksOutlineModal.open(storyData, 'edit'); // 我的绘本页面编辑模式
             }
@@ -1105,24 +1147,24 @@
                 "core_elements": {
                     "title": book.title,
                     "characters": book.characters || [
-                        {"name": "小兔子", "description": "勇敢善良的主角，喜欢探险"},
-                        {"name": "小熊", "description": "友善的伙伴，总是乐于助人"},
-                        {"name": "小鸟", "description": "聪明的向导，熟悉森林的每一个角落"}
+                        { "name": "小兔子", "description": "勇敢善良的主角，喜欢探险" },
+                        { "name": "小熊", "description": "友善的伙伴，总是乐于助人" },
+                        { "name": "小鸟", "description": "聪明的向导，熟悉森林的每一个角落" }
                     ],
                     "theme": book.theme || "友谊与冒险的温暖故事",
                     "settings": book.settings || [
-                        {"name": "神秘森林", "description": "充满未知和惊喜的冒险之地"},
-                        {"name": "温暖小屋", "description": "安全舒适的家园"},
-                        {"name": "彩虹桥", "description": "连接梦想与现实的神奇之桥"}
+                        { "name": "神秘森林", "description": "充满未知和惊喜的冒险之地" },
+                        { "name": "温暖小屋", "description": "安全舒适的家园" },
+                        { "name": "彩虹桥", "description": "连接梦想与现实的神奇之桥" }
                     ],
                     "page_count": book.pages || 8
                 },
                 "outline": book.outline || [
-                    {"page_number": 1, "scene": "神秘森林", "plot_summary": "小兔子在森林里迷路了，四周都是陌生的树木和声音"},
-                    {"page_number": 2, "scene": "神秘森林", "plot_summary": "遇到了友善的小熊，小熊主动提出要帮助小兔子"},
-                    {"page_number": 3, "scene": "神秘森林", "plot_summary": "小鸟飞来加入他们，用歌声指引方向"},
-                    {"page_number": 4, "scene": "彩虹桥", "plot_summary": "三个朋友一起走过美丽的彩虹桥"},
-                    {"page_number": 5, "scene": "温暖小屋", "plot_summary": "终于到达了温暖的家，三个好朋友成为了最好的伙伴"}
+                    { "page_number": 1, "scene": "神秘森林", "plot_summary": "小兔子在森林里迷路了，四周都是陌生的树木和声音" },
+                    { "page_number": 2, "scene": "神秘森林", "plot_summary": "遇到了友善的小熊，小熊主动提出要帮助小兔子" },
+                    { "page_number": 3, "scene": "神秘森林", "plot_summary": "小鸟飞来加入他们，用歌声指引方向" },
+                    { "page_number": 4, "scene": "彩虹桥", "plot_summary": "三个朋友一起走过美丽的彩虹桥" },
+                    { "page_number": 5, "scene": "温暖小屋", "plot_summary": "终于到达了温暖的家，三个好朋友成为了最好的伙伴" }
                 ]
             };
         }
@@ -1136,49 +1178,63 @@
         // 从大纲生成绘本
         function generateBookFromOutline(storyData) {
             console.log('从大纲生成绘本：', storyData);
-            
+
             // 使用保存的 bookId，如果没有则从 storyData 中获取
             let bookId = currentEditingBookId || storyData.bookId;
-            
+
             console.log('准备生成绘本，bookId:', bookId);
             console.log('currentEditingBookId:', currentEditingBookId);
             console.log('storyData.bookId:', storyData.bookId);
-            
+
             // 关闭大纲确认窗口
             closeOutlineConfirm();
-            
+
             // 找到对应的书籍
             const book = booksData.find(b => b.id === bookId);
             if (!book) {
                 console.error('未找到对应的书籍，bookId:', bookId);
-                console.error('所有书籍:', booksData.map(b => ({id: b.id, title: b.title})));
+                console.error('所有书籍:', booksData.map(b => ({ id: b.id, title: b.title })));
                 showToast('生成失败：未找到对应的绘本', 'error');
                 return;
             }
-            
+
             console.log('找到书籍:', book);
-            
+
             // 更新书籍状态为生成中
             book.status = 'generating';
             book.progress = 0;
             book.generationStep = 1;
             renderBooks();
+
+            console.log('书籍状态已更新为 generating，准备显示生成窗口');
+
+            // 使用新的 StorybookGeneration 组件
+            const sg = new StorybookGeneration();
+            sg.onComplete((pages) => {
+                console.log('生成完成', pages);
+                // 更新绘本状态
+                book.status = 'completed';
+                book.progress = 100;
+                renderBooks();
+                showToast('✅ 绘本生成完成！', 'success');
+            });
+            sg.onCancel(() => {
+                console.log('已取消生成');
+                // 更新绘本状态为已取消
+                if (book.status === 'generating') {
+                    book.status = 'cancelled';
+                }
+                renderBooks();
+            });
             
-            console.log('书籍状态已更新为 generating，准备显示进度窗口');
-            
-            // 显示进度窗口
-            generationProgress.show(bookId, 1);
-            
-            console.log('进度窗口已显示，开始模拟生成过程');
-            
-            // 模拟生成过程（实际项目中应调用后端 API）
-            simulateBookGeneration(bookId);
+            // 开始模拟生成
+            sg.simulateGeneration();
         }
 
         // 创建详情内容
         function createDetailContent(book) {
             const statusConfig = getStatusConfig(book.status);
-            
+
             return `
                 <div class="space-y-6">
                     <!-- 状态和基本信息 -->
@@ -1258,7 +1314,7 @@
         // 获取详情页操作按钮
         function getDetailActionButtons(book) {
             let buttons = '';
-            
+
             switch (book.status) {
                 case 'draft':
                     buttons = `
@@ -1299,9 +1355,9 @@
                 case 'failed':
                 case 'cancelled':
                     buttons = `
-                        <button onclick="retryGeneration(${book.id})" class="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-all">
-                            <i data-lucide="refresh-cw" class="w-4 h-4 inline mr-2"></i>
-                            重新生成
+                        <button onclick="continueGeneration(${book.id})" class="flex-1 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-all">
+                            <i data-lucide="play" class="w-4 h-4 inline mr-2"></i>
+                            继续生成
                         </button>
                         <button onclick="editDraft(${book.id})" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all">
                             <i data-lucide="edit-3" class="w-4 h-4 inline mr-2"></i>
@@ -1348,12 +1404,45 @@
         function viewProgress(bookId) {
             const book = booksData.find(b => b.id === bookId);
             if (!book) return;
-            
-            // 获取当前生成步骤（默认为1）
-            const currentStep = book.generationStep || 1;
-            
-            // 显示进度窗口
-            generationProgress.show(bookId, currentStep);
+
+            // 使用新的生成组件
+            openStorybookGeneration(book);
+        }
+
+        // 继续生成（失败/已取消状态）
+        function continueGeneration(bookId) {
+            const book = booksData.find(b => b.id === bookId);
+            if (!book) return;
+
+            // 使用新的生成组件，传入 isContinue = true
+            openStorybookGeneration(book, true);
+        }
+
+        // 打开绘本生成组件
+        function openStorybookGeneration(book, isContinue = false) {
+            const sg = new StorybookGeneration();
+            sg.onComplete((pages) => {
+                console.log('生成完成', pages);
+                // 更新绘本状态
+                book.status = 'completed';
+                book.progress = 100;
+                renderBooks();
+            });
+            sg.onCancel(() => {
+                console.log('已放弃生成');
+                // 更新绘本状态为已取消
+                if (book.status === 'generating') {
+                    book.status = 'cancelled';
+                }
+                renderBooks();
+            });
+
+            // 根据是否是继续生成调用不同方法
+            if (isContinue) {
+                sg.simulateContinueGeneration();
+            } else {
+                sg.simulateGeneration();
+            }
         }
 
         function readBook(bookId) {
@@ -1368,6 +1457,57 @@
             if (book && book.status === 'completed') {
                 // 使用默认的绘本数据打开阅读器
                 window.storybookReader.open(window.defaultStorybookData);
+            }
+        }
+
+        // 编辑绘本
+        function editBook(bookId) {
+            const book = booksData.find(b => b.id === bookId);
+            if (!book || book.status !== 'completed') {
+                showToast('只能编辑已完成的绘本', 'error');
+                return;
+            }
+
+            // 准备页面数据（使用默认测试数据）
+            const pages = [
+                { imageUrl: 'images/1.png', narration: '在一个遥远的森林里，住着一只勇敢的小兔子。' },
+                { imageUrl: 'images/2.png', narration: '小兔子每天都在森林里探险，寻找新的朋友。' },
+                { imageUrl: 'images/3.png', narration: '有一天，它遇到了一只迷路的小鸟。' },
+                { imageUrl: 'images/4.png', narration: '小兔子决定帮助小鸟找到回家的路。' },
+                { imageUrl: 'images/5.png', narration: '它们一起穿过了茂密的树林。' },
+                { imageUrl: 'images/6.png', narration: '终于，它们找到了小鸟的家。' },
+                { imageUrl: 'images/7.png', narration: '小鸟的妈妈非常感谢小兔子。' },
+                { imageUrl: 'images/8.png', narration: '从此，小兔子和小鸟成为了最好的朋友。' },
+                { imageUrl: 'images/9.png', narration: '它们每天都在一起玩耍。' },
+                { imageUrl: 'images/10.png', narration: '森林里充满了欢声笑语。' },
+                { imageUrl: 'images/11.png', narration: '小兔子明白了，帮助别人是最快乐的事情。' },
+                { imageUrl: 'images/12.png', narration: '它们的友谊将永远持续下去。' }
+            ];
+
+            // 创建编辑器实例
+            const editor = new StorybookEditor();
+            editor.onClose((updatedPages) => {
+                console.log('编辑完成，更新后的页面数据：', updatedPages);
+                // 这里可以保存更新后的数据
+                // 不需要提示，因为每次修改都已经独立保存并提示了
+            });
+
+            // 显示编辑器
+            editor.show(pages);
+        }
+
+        // 打开失败或已取消的绘本
+        function openFailedOrCancelledBook(bookId) {
+            const book = booksData.find(b => b.id === bookId);
+            if (!book) return;
+
+            // 根据是否有封面判断是哪个阶段失败/取消的
+            if (book.coverImage) {
+                // 有封面，说明是生图阶段失败/取消，打开生成绘本窗口
+                openStorybookGeneration(book, true);
+            } else {
+                // 无封面，说明是脚本阶段失败/取消，打开大纲确认界面
+                openOutlineConfirm(bookId);
             }
         }
 
@@ -1431,10 +1571,10 @@
                 book.status = 'draft';
                 book.progress = 0;
                 renderBooks();
-                
+
                 // 显示提示信息
                 showToast('已恢复到大纲确认状态，请检查大纲后重新生成', 'info');
-                
+
                 // 自动打开大纲确认窗口
                 setTimeout(() => {
                     openOutlineConfirm(bookId);
@@ -1446,16 +1586,16 @@
         function retryGenerateBook(bookId) {
             const book = booksData.find(b => b.id === bookId);
             if (!book) return;
-            
+
             // 更新状态为生成中
             book.status = 'generating';
             book.progress = 0;
             book.generationStep = 1;
             renderBooks();
-            
+
             // 显示进度窗口
             generationProgress.show(bookId, 1);
-            
+
             // 模拟生成过程
             simulateBookGeneration(bookId);
         }
@@ -1472,10 +1612,6 @@
                     showToast('已取消生成', 'info');
                 }
             }
-        }
-
-        function editBook(bookId) {
-            showToast('编辑功能开发中', 'info');
         }
 
         function shareBook(bookId) {
@@ -1500,7 +1636,7 @@
             // 使用新的模拟生成方法（带详细进度追踪）
             try {
                 await generationProgress.simulateGeneration();
-                
+
                 // 生成完成后更新书籍状态
                 if (book && book.status === 'generating') {
                     book.status = 'completed';
@@ -1508,9 +1644,9 @@
                     book.generationStep = 0;
                     book.completedAt = new Date().toISOString();
                     renderBooks();
-                    
+
                     showToast('✅ 绘本生成完成！', 'success');
-                    
+
                     // 自动打开绘本阅读器
                     setTimeout(() => {
                         if (window.storybookReader && window.defaultStorybookData) {
@@ -1550,7 +1686,7 @@
             // 根据类型设置图标和背景色
             let bgColor = 'bg-green-500'; // 默认成功是绿色
             let iconName = 'check-circle';
-            
+
             if (type === 'error') {
                 bgColor = 'bg-amber-500';
                 iconName = 'alert-circle';
@@ -1568,14 +1704,14 @@
             // 更新图标
             toastIcon.setAttribute('data-lucide', iconName);
             lucide.createIcons();
-            
+
             toast.classList.remove('pointer-events-none');
-            
+
             // 3秒后自动隐藏
             setTimeout(() => {
                 toast.classList.remove('opacity-100', 'translate-y-0');
                 toast.classList.add('opacity-0', '-translate-y-2');
-                
+
                 setTimeout(() => {
                     toast.classList.add('pointer-events-none');
                 }, 300);
@@ -1593,10 +1729,10 @@
             }
 
             currentPreviewBookId = bookId;
-            
+
             // 更新标题
             document.getElementById('outlinePreviewTitle').textContent = `《${book.title}》 - 大纲预览`;
-            
+
             // 渲染大纲内容
             const content = document.getElementById('outlinePreviewContent');
             content.innerHTML = book.outline.map((page, index) => `
@@ -1609,12 +1745,12 @@
                     <p class="text-sm text-gray-700 leading-relaxed">${page}</p>
                 </div>
             `).join('');
-            
+
             // 显示弹窗
             const modal = document.getElementById('outlinePreviewModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            
+
             // 重新渲染图标
             setTimeout(() => {
                 lucide.createIcons();
@@ -1630,21 +1766,28 @@
 
         function editOutlineFromPreview() {
             if (!currentPreviewBookId) return;
-            
+
             closeOutlinePreview();
             editDraft(currentPreviewBookId);
         }
 
         function retryFromPreview() {
             if (!currentPreviewBookId) return;
-            
+
             closeOutlinePreview();
             retryGeneration(currentPreviewBookId);
         }
 
+        function continueFromPreview() {
+            if (!currentPreviewBookId) return;
+
+            closeOutlinePreview();
+            continueGeneration(currentPreviewBookId);
+        }
+
 
         // ESC键关闭弹窗
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 // 检查哪个模态窗口是打开的并关闭它
                 const outlinePreviewModal = document.getElementById('outlinePreviewModal');
@@ -1660,8 +1803,10 @@
     </script>
 
     <!-- 大纲预览弹窗（失败状态查看大纲） -->
-    <div id="outlinePreviewModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col transform transition-all">
+    <div id="outlinePreviewModal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div
+            class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col transform transition-all">
             <!-- 弹窗头部 -->
             <div class="flex items-center justify-between p-6 border-b border-gray-200">
                 <div class="flex items-center gap-3">
@@ -1671,7 +1816,8 @@
                         生成失败
                     </span>
                 </div>
-                <button onclick="closeOutlinePreview()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+                <button onclick="closeOutlinePreview()"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
                     <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
                 </button>
             </div>
@@ -1683,16 +1829,20 @@
 
             <!-- 弹窗底部操作按钮 -->
             <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
-                <button onclick="editOutlineFromPreview()" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all flex items-center gap-2">
+                <button onclick="editOutlineFromPreview()"
+                    class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all flex items-center gap-2">
                     <i data-lucide="edit-3" class="w-4 h-4"></i>
                     编辑大纲
                 </button>
-                <button onclick="retryFromPreview()" class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-primary-500 to-purple-600 rounded-lg hover:shadow-lg transition-all flex items-center gap-2">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                    重新生成
+                <button onclick="continueFromPreview()"
+                    class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-primary-500 to-purple-600 rounded-lg hover:shadow-lg transition-all flex items-center gap-2">
+                    <i data-lucide="play" class="w-4 h-4"></i>
+                    继续生成
                 </button>
             </div>
         </div>
     </div>
+    <script src="../components/prd-drawer.js" data-doc="../docs/your-doc.md"></script>
 </body>
+
 </html>

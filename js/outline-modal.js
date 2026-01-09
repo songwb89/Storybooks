@@ -31,10 +31,9 @@ class OutlineModal {
             <div id="${this.options.containerId}" class="fixed inset-0 bg-white z-[60] hidden">
                 <!-- 顶部操作栏 -->
                 <div class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm">
-                    <button onclick="outlineModal.close()" class="cancel-btn flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                        <span class="font-medium">取消</span>
-                    </button>
+                    <div>
+                        <!-- 左侧留空 -->
+                    </div>
                     
                     <h2 class="text-2xl font-bold text-gray-800">确认故事大纲</h2>
                     
@@ -46,6 +45,13 @@ class OutlineModal {
                         <button onclick="outlineModal.generate()" class="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all">
                             <i data-lucide="wand-2" class="w-4 h-4"></i>
                             <span>生成绘本</span>
+                        </button>
+                        
+                        <!-- 分隔线 -->
+                        <div class="w-px h-6 bg-gray-300"></div>
+                        
+                        <button onclick="outlineModal.close()" class="cancel-btn p-2.5 bg-transparent hover:bg-gray-100 text-gray-600 hover:text-gray-900 rounded-lg transition-all border border-gray-300">
+                            <i data-lucide="x" class="w-5 h-5"></i>
                         </button>
                     </div>
                 </div>

@@ -1,10 +1,9 @@
 {
   "docs": [
-    { "name": "绘本需求4.0", "file": "绘本需求4.0.md" },
-    { "name": "绘本需求2.0", "file": "绘本需求2.0.md" }
+    { "name": "绘本需求1.0.4", "file": "绘本需求1.0.4.md" }
   ],
   "pageMapping": {
-    "index.html": "绘本需求4.0.md",
-    "my-books.html": "绘本需求4.0.md"
+    "index.html": "绘本需求1.0.4.md",
+    "my-books.html": "绘本需求1.0.4.md"
   }
 }

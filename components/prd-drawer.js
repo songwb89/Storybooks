@@ -773,7 +773,7 @@
     async function openDoc(file, name) {
         currentDoc = file;
         showDocView(name || file);
-        await loadDocContent('../docs/' + file);
+        await loadDocContent('docs/' + file);
     }
 
     // 打开抽屉

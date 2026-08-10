@@ -13,10 +13,71 @@
     const configUrl = scriptDir + '/../docs/config.json';
     const buttonPosition = script.getAttribute('data-position') || 'bottom-right';
 
+    // PlantUML 服务地址（可配置）
+    // - 方式1：在 script 标签上配置：data-plantuml-server="https://xxx/plantuml"
+    // - 方式2：全局变量：window.PLANTUML_SERVER = "https://xxx/plantuml"
+    // - 方式3：全局变量：window.PLANTUML_SERVERS = ["https://a/plantuml", "https://b/plantuml"]
+    const configuredPlantUMLServer = script.getAttribute('data-plantuml-server') ||
+        (typeof window !== 'undefined' ? window.PLANTUML_SERVER : undefined);
+    const configuredPlantUMLServers = (typeof window !== 'undefined' && Array.isArray(window.PLANTUML_SERVERS))
+        ? window.PLANTUML_SERVERS
+        : [];
+    const PLANTUML_SERVERS = [
+        ...configuredPlantUMLServers,
+        configuredPlantUMLServer,
+        'https://www.plantuml.com/plantuml',
+        'https://plantuml.com/plantuml',
+    ].filter(Boolean);
+
     // 配置数据
     let config = { docs: [], pageMapping: {} };
     let currentDoc = null; // 当前显示的文档
     let currentView = 'list'; // 'list' 或 'doc'
+
+    // ============================================================
+    // 缓存策略
+    //  - .md 文档内容：不缓存，每次强制重新拉取
+    //  - UI 状态（滚动位置、章节位置、大纲展开）：sessionStorage
+    //    （关掉浏览器标签页就清空，重新打开看到的是新内容 + 顶部位置）
+    //  - 用户主动选择的文档：localStorage（这是偏好，应跨标签页保留）
+    // ============================================================
+    const SESSION_PREFIX = 'prd-sess-';
+
+    function sessGet(key) {
+        try { return sessionStorage.getItem(SESSION_PREFIX + key); } catch (e) { return null; }
+    }
+    function sessSet(key, value) {
+        try { sessionStorage.setItem(SESSION_PREFIX + key, String(value)); } catch (e) {}
+    }
+    function sessDel(key) {
+        try { sessionStorage.removeItem(SESSION_PREFIX + key); } catch (e) {}
+    }
+
+    // 用户主动选择缓存：按页面分别存储 { pageName: docFile }
+    function getUserChoiceKey() {
+        return 'prd-user-choice-' + getPageName();
+    }
+    function getUserChoice() {
+        try {
+            return localStorage.getItem(getUserChoiceKey());
+        } catch (e) {
+            return null;
+        }
+    }
+    function setUserChoice(docFile) {
+        try {
+            localStorage.setItem(getUserChoiceKey(), docFile);
+        } catch (e) {
+            // 忽略存储失败
+        }
+    }
+    function clearUserChoice() {
+        try {
+            localStorage.removeItem(getUserChoiceKey());
+        } catch (e) {
+            // 忽略
+        }
+    }
 
     // 获取当前页面名（标准化处理，兼容多种环境）
     function getPageName() {
@@ -98,20 +159,24 @@
         .prd-fab {
             position: fixed;
             ${positions[buttonPosition] || positions['bottom-right']}
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 18px 0 14px;
+            height: 44px;
+            border-radius: 22px;
             background: #1a1a2e;
             color: white;
             border: none;
-            font-size: 24px;
+            font-size: 15px;
+            font-weight: 500;
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             transition: transform 0.2s, background 0.2s;
             z-index: 10000;
         }
         .prd-fab:hover {
-            transform: scale(1.1);
+            transform: scale(1.05);
             background: #2d2d44;
         }
         .prd-overlay {
@@ -429,6 +494,8 @@
             flex: 1;
             padding: 30px;
             overflow-y: auto;
+            background: #fff;
+            color: #111827;
         }
         /* Markdown 渲染样式 */
         .prd-content h1 {
@@ -626,7 +693,7 @@
     // 创建 DOM 结构
     const container = document.createElement('div');
     container.innerHTML = `
-        <button class="prd-fab" title="查看 PRD 文档">📄</button>
+        <button class="prd-fab" title="查看设计文档">📄 文档</button>
         <div class="prd-overlay"></div>
         <div class="prd-drawer">
             <div class="prd-header">
@@ -747,7 +814,7 @@
                 <span class="prd-doc-item-icon">📄</span>
                 <div class="prd-doc-item-name">${doc.name}</div>
             `;
-            item.onclick = () => openDoc(doc.file, doc.name);
+            item.onclick = () => openDoc(doc.file, doc.name, 'user');
             docListInner.appendChild(item);
         });
     }
@@ -770,10 +837,14 @@
     }
 
     // 打开指定文档
-    async function openDoc(file, name) {
+    // source: 'user' 表示用户主动选择（写入按页缓存）；其他值不写入
+    async function openDoc(file, name, source) {
         currentDoc = file;
+        if (source === 'user') {
+            setUserChoice(file);
+        }
         showDocView(name || file);
-        await loadDocContent('docs/' + file);
+        await loadDocContent(scriptDir + '/../docs/' + file);
     }
 
     // 打开抽屉
@@ -786,7 +857,19 @@
         await loadConfig();
         renderDocList();
 
-        // 根据页面映射决定显示什么
+        // 1) 优先使用用户主动选择的缓存（按页面分别存储）
+        const userChoice = getUserChoice();
+        if (userChoice) {
+            const docInfo = config.docs.find(d => d.file === userChoice);
+            if (docInfo) {
+                await openDoc(userChoice, docInfo.name);
+                return;
+            }
+            // 缓存指向已不存在的文档时，清掉缓存并回退
+            clearUserChoice();
+        }
+
+        // 2) 回退：使用页面映射
         const pageName = getPageName();
         const mapping = getPageMapping(pageName);
 
@@ -818,6 +901,16 @@
         document.body.style.overflow = '';
     }
 
+    async function openDocByPath(file, name) {
+        overlay.classList.add('open');
+        drawer.classList.add('open');
+        document.body.style.overflow = 'hidden';
+
+        await loadConfig();
+        renderDocList();
+        await openDoc(file, name || file);
+    }
+
     // 点击面包屑返回列表
     breadcrumbRoot.addEventListener('click', () => {
         if (currentView === 'doc') {
@@ -834,7 +927,10 @@
             // 先加载依赖库
             await loadDependencies();
 
-            const res = await fetch(docPath);
+            // 强制不走任何缓存：cache:'no-store' + 时间戳参数
+            // 这样磁盘缓存和内存缓存都会被绕过，每次都拿到最新内容
+            const noCacheUrl = docPath + (docPath.includes('?') ? '&' : '?') + '_t=' + Date.now();
+            const res = await fetch(noCacheUrl, { cache: 'no-store' });
             if (!res.ok) throw new Error('文档未找到: ' + docPath);
             const md = await res.text();
 
@@ -883,7 +979,8 @@
             }
 
             // 恢复滚动条位置（在所有内容渲染完成后执行）
-            const savedScroll = localStorage.getItem('prd-scroll-' + currentDoc);
+            // 使用 sessionStorage：保留本次会话的滚动位置，但重新打开/刷新可拉到最新内容
+            const savedScroll = sessGet('scroll-' + currentDoc);
             if (savedScroll) {
                 setTimeout(() => {
                     content.scrollTop = parseInt(savedScroll);
@@ -987,9 +1084,11 @@
                 console.log('[PlantUML] 开始编码，原始代码长度:', text.length);
                 const encoded = encodePlantUML(text);
                 console.log('[PlantUML] 编码结果:', encoded.substring(0, 100) + '...');
-                // 使用 PlantUML 官方服务（使用 HTTPS）
-                const imageUrl = `https://www.plantuml.com/plantuml/svg/${encoded}`;
-                console.log('[PlantUML] 图片URL:', imageUrl);
+
+                const buildImageUrl = (serverBase, encodedText) => {
+                    const base = String(serverBase || '').replace(/\/$/, '');
+                    return `${base}/svg/${encodedText}`;
+                };
 
                 // 创建图片容器
                 const container = document.createElement('div');
@@ -1006,30 +1105,59 @@
                 const img = document.createElement('img');
 
                 const loadPromise = new Promise((resolve) => {
+                    let done = false;
+                    let serverIndex = 0;
+                    const tried = [];
+
+                    const finish = () => {
+                        if (done) return;
+                        done = true;
+                        resolve();
+                    };
+
+                    const tryLoadNextServer = () => {
+                        const serverBase = PLANTUML_SERVERS[serverIndex++];
+                        if (!serverBase) {
+                            console.error('[PlantUML] all servers failed:', tried);
+                            loading.remove();
+                            const errorMsg = document.createElement('div');
+                            errorMsg.style.cssText = 'color: #e74c3c; padding: 20px; text-align: left;';
+                            errorMsg.innerHTML =
+                                '❌ PlantUML 图表加载失败（可能是网络/代理拦截或 PlantUML 公共服务限流，例如 509）' +
+                                `<br><small>已尝试服务：${tried.map(s => s.replace(/^https?:\/\//, '')).join(' / ') || '无'}</small>` +
+                                '<br><small>建议：配置内网 PlantUML 服务：在页面设置 window.PLANTUML_SERVER 或 script 标签加 data-plantuml-server</small>';
+                            container.innerHTML = '';
+                            container.appendChild(errorMsg);
+                            finish();
+                            return;
+                        }
+
+                        const imageUrl = buildImageUrl(serverBase, encoded);
+                        tried.push(serverBase);
+                        console.log('[PlantUML] 图片URL:', imageUrl);
+                        img.src = imageUrl;
+                    };
+
                     img.onload = () => {
+                        if (done) return;
                         loading.remove();
                         img.style.display = 'block';
-                        resolve();
+                        finish();
                     };
 
                     img.onerror = (e) => {
-                        console.error('PlantUML image load error:', e, 'URL:', imageUrl);
-                        loading.remove();
-                        const errorMsg = document.createElement('div');
-                        errorMsg.style.cssText = 'color: #e74c3c; padding: 20px;';
-                        errorMsg.innerHTML = '❌ PlantUML 图表加载失败<br><small>请检查网络连接或代码是否正确</small>';
-                        container.innerHTML = '';
-                        container.appendChild(errorMsg);
-                        resolve();
+                        console.error('PlantUML image load error:', e, 'current src:', img.src);
+                        // 自动切换下一个服务地址
+                        tryLoadNextServer();
                     };
+
+                    // 启动首次加载
+                    tryLoadNextServer();
                 });
                 imageLoadPromises.push(loadPromise);
 
-                img.src = imageUrl;
                 img.alt = 'PlantUML Diagram';
                 img.style.cssText = 'max-width: 100%; height: auto; display: none;';
-
-                container.appendChild(img);
 
                 container.appendChild(img);
                 pre.replaceWith(container);
@@ -1060,6 +1188,12 @@
         if (e.key === 'Escape') close();
     });
 
+    window.prdDrawer = {
+        open,
+        close,
+        openDocByPath,
+    };
+
     // 生成目录
     function buildTOC() {
         // 获取所有标题
@@ -1087,13 +1221,13 @@
         // 箭头 SVG
         const arrowSvg = '<svg class="prd-toc-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>';
 
-        // 大纲展开状态存储 key
-        const tocStateKey = 'prd-toc-state-' + (currentDoc || 'default');
+        // 大纲展开状态存储 key（用 sessionStorage：本次会话内保持展开状态）
+        const tocStateKey = 'toc-state-' + (currentDoc || 'default');
 
         // 获取保存的展开状态
         function getCollapsedNodes() {
             try {
-                return JSON.parse(localStorage.getItem(tocStateKey)) || {};
+                return JSON.parse(sessGet(tocStateKey)) || {};
             } catch (e) {
                 return {};
             }
@@ -1101,7 +1235,7 @@
 
         // 保存展开状态
         function saveCollapsedNodes(collapsed) {
-            localStorage.setItem(tocStateKey, JSON.stringify(collapsed));
+            sessSet(tocStateKey, JSON.stringify(collapsed));
         }
 
         // 生成节点唯一标识（标题文字 + 层级）
@@ -1198,6 +1332,11 @@
             tocList.querySelectorAll('.prd-toc-parent, .prd-toc-child').forEach(el => {
                 el.classList.toggle('active', el.dataset.id === id);
             });
+            // 自动将高亮项滚动到可视区域
+            const activeEl = tocList.querySelector('.prd-toc-parent.active, .prd-toc-child.active');
+            if (activeEl) {
+                activeEl.scrollIntoView({ behavior: 'instant', block: 'nearest' });
+            }
         }
 
         // 默认高亮第一个
@@ -1221,11 +1360,11 @@
 
         let saveScrollTimer = null;
         function scrollHandler() {
-            // 保存滚动位置（防抖处理）
+            // 保存滚动位置（防抖处理）- 用 sessionStorage
             if (saveScrollTimer) clearTimeout(saveScrollTimer);
             saveScrollTimer = setTimeout(() => {
                 if (currentDoc) {
-                    localStorage.setItem('prd-scroll-' + currentDoc, content.scrollTop);
+                    sessSet('scroll-' + currentDoc, content.scrollTop);
                 }
             }, 200);
 

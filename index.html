@@ -10,7 +10,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>AI绘本 - 兆涵科技</title>
+    <title>AI绘本 - 小兆老师</title>
 
     
 
@@ -303,7 +303,7 @@
 
                 </div>
 
-                <span class="text-base font-semibold text-gray-800">兆涵科技</span>
+                <span class="text-base font-semibold text-gray-800">小兆老师</span>
 
             </div>
 
@@ -1519,16 +1519,10 @@
 
         // 选择精选故事
 
-        async function selectStory(storyName) {
+        function selectStory(storyName) {
 
-            // 如果是"丑小鸭的春天"，直接打开阅读器
-            if (storyName === '丑小鸭的春天') {
-                window.storybookReader.open(window.defaultStorybookData);
-                return;
-            }
-            
-            // 其他绘本暂时没有效果（原型阶段）
-            return;
+            // 原型阶段所有精选绘本共用同一套预览数据
+            window.storybookReader.open(window.defaultStorybookData);
         }
 
         // 监听Enter键（Ctrl+Enter提交）
